@@ -1,0 +1,853 @@
+﻿============================================================
+ANDIKA
+PHASE 2A — FRONTEND IMPLEMENTATION
+============================================================
+
+ROLE
+
+Act as a Principal Frontend Engineer, UX Engineer, Design Systems
+Engineer, Accessibility Engineer, and Performance Engineer.
+
+You are now implementing the ANDIKA frontend based on:
+
+1. The approved Phase 1 product specification
+2. The approved requirements matrix
+3. The approved architecture
+4. The existing repository
+5. The supplied visual references
+
+Do NOT redesign the product architecture independently.
+
+If implementation details need adjustment, preserve the Phase 1
+requirements and document meaningful architectural changes.
+
+============================================================
+1. STACK
+============================================================
+
+Use:
+
+Next.js
+React
+TypeScript
+App Router
+Tailwind CSS
+shadcn/ui
+Phosphor Icons
+
+Animation:
+
+Motion
+
+GSAP + ScrollTrigger only where genuinely necessary.
+
+Use:
+
+next/font
+
+Use Server Components by default.
+
+Use Client Components only where interaction requires them.
+
+============================================================
+2. FRONTEND OBJECTIVE
+============================================================
+
+Build a production-quality frontend.
+
+It must be:
+
+- responsive
+- accessible
+- fast
+- maintainable
+- visually polished
+- interactive
+- secure
+- type-safe
+
+Do not create static mockups.
+
+Every interactive control must perform a real action or have an
+explicitly documented integration boundary.
+
+============================================================
+3. BRAND
+============================================================
+
+Product:
+
+ANDIKA
+
+Never use TypeForge.
+
+Brand palette:
+
+Forest:
+#415239
+#34442F
+#29372A
+
+Ivory:
+#FAF8F5
+#F4F0E7
+
+Neutral:
+#E8E5DD
+
+Text:
+#30302E
+#696A64
+
+Border:
+#D9D7CF
+
+Create centralized semantic design tokens.
+
+============================================================
+4. BRAND ASSETS
+============================================================
+
+Create/implement:
+
+/public/brand/andika-logo.svg
+/public/brand/andika-logo-dark.svg
+/public/brand/andika-logo-light.svg
+
+/public/brand/andika-mark.svg
+/public/brand/andika-mark-dark.svg
+/public/brand/andika-mark-light.svg
+
+/public/brand/andika-wordmark.svg
+
+Favicon:
+
+/app/icon.svg
+/app/apple-icon.svg
+
+where appropriate:
+
+favicon PNG variants
+Apple touch icon
+PWA icons
+OpenGraph image
+
+The favicon must use the simplified ANDIKA mark.
+
+It must visually match the main logo.
+
+============================================================
+5. DESIGN SYSTEM
+============================================================
+
+Create reusable components.
+
+Foundation:
+
+Button
+IconButton
+Input
+PasswordInput
+SearchInput
+Select
+Combobox
+Tabs
+Dialog
+Drawer
+Dropdown
+Tooltip
+Popover
+Toast
+Alert
+Badge
+Avatar
+Card
+Progress
+Slider
+Switch
+Checkbox
+Radio
+Table
+Chart
+Skeleton
+EmptyState
+ErrorState
+Breadcrumb
+Pagination
+CommandMenu
+
+Domain components:
+
+TypingEditor
+TypingText
+TypingCaret
+TypingStats
+TypingKeyboard
+TypingTimer
+TypingResult
+TypingAnalysis
+WeakKeys
+PerformanceChart
+LessonCard
+CourseProgress
+AchievementCard
+LeaderboardTable
+CompetitionRoom
+
+Do not create giant components.
+
+============================================================
+6. MARKETING WEBSITE
+============================================================
+
+Implement:
+
+Announcement
+Navigation
+Hero
+Interactive typing demo
+Product philosophy
+Why typing matters
+Learn
+Practice
+Test
+How You Typed
+Personalized improvement
+Analytics
+Themes
+Keyboard layouts
+Programming typing
+Achievements
+Streaks
+Leaderboards
+Competition
+Learning journey
+Interface preview
+Accessibility
+Security
+Pricing
+FAQ
+Final CTA
+Footer
+
+The landing page must feel premium and original.
+
+Visual direction:
+
+warm ivory
+forest green
+charcoal
+editorial whitespace
+restrained motion
+premium typography
+
+Do not clone the supplied reference.
+
+============================================================
+7. HERO
+============================================================
+
+Build a REAL interactive typing demo.
+
+Support:
+
+typing
+caret
+timer
+WPM
+accuracy
+progress
+correct characters
+incorrect characters
+restart
+completion
+
+Do not fake typing with a prerecorded animation.
+
+============================================================
+8. AUTHENTICATION UI
+============================================================
+
+Build:
+
+/login
+/signup
+/forgot-password
+/reset-password
+/verify-email
+
+Support integration with Supabase Auth.
+
+UI must handle:
+
+loading
+validation
+errors
+success
+session states
+expired sessions
+OAuth redirect states
+
+Authentication must be secure.
+
+============================================================
+9. ONBOARDING
+============================================================
+
+Build onboarding for:
+
+experience level
+goal
+keyboard layout
+language
+theme
+sound
+
+Provide:
+
+Beginner
+Intermediate
+Advanced
+
+Goals:
+
+Speed
+Accuracy
+Both
+
+Keyboard:
+
+QWERTY
+AZERTY
+QWERTZ
+Dvorak
+Colemak
+
+============================================================
+10. APPLICATION SHELL
+============================================================
+
+Build:
+
+responsive navigation
+desktop sidebar where appropriate
+mobile navigation
+command menu
+profile menu
+notifications
+theme switching
+
+Navigation:
+
+Dashboard
+Learn
+Practice
+Test
+Analytics
+Leaderboard
+Competition
+Programming
+Achievements
+Profile
+Settings
+
+============================================================
+11. DASHBOARD
+============================================================
+
+Implement real API-driven dashboard.
+
+Include:
+
+today's goal
+streak
+recommended lesson
+course progress
+current WPM
+average WPM
+best WPM
+accuracy
+consistency
+recent performance
+weak keys
+recent tests
+achievements
+leaderboard
+programming typing
+
+Quick actions:
+
+Start Practice
+Take Test
+Continue Lesson
+View Analytics
+
+Do not hardcode production statistics.
+
+============================================================
+12. LEARNING UI
+============================================================
+
+Build:
+
+course list
+course details
+modules
+lessons
+lesson progress
+exercise interface
+keyboard visualization
+completion state
+
+Lesson flow:
+
+instruction
+→ demonstration
+→ practice
+→ evaluation
+→ result
+→ progress
+
+============================================================
+13. TYPING ENGINE UI
+============================================================
+
+Implement the frontend typing engine.
+
+Requirements:
+
+low latency
+local processing
+caret
+keyboard visualization
+timer
+WPM
+accuracy
+progress
+correct/incorrect characters
+backspace handling
+completion
+
+Do not rerender the entire page for each keypress.
+
+Use efficient state management.
+
+============================================================
+14. TYPING TEST UI
+============================================================
+
+Modes:
+
+Time
+Words
+Quote
+Custom
+Programming
+
+Options:
+
+15s
+30s
+60s
+120s
+Custom
+
+Words:
+
+10
+25
+50
+100
+Custom
+
+Support:
+
+punctuation
+numbers
+capitalization
+difficulty
+
+============================================================
+15. RESULTS
+============================================================
+
+Create a polished result experience.
+
+Display:
+
+WPM
+Raw WPM
+Accuracy
+Consistency
+Characters
+Correct
+Incorrect
+Backspaces
+Duration
+
+Then:
+
+HOW YOU TYPED
+
+Show:
+
+speed graph
+accuracy graph
+errors
+weak keys
+slow transitions
+recommendations
+
+Do not use fake analytics.
+
+============================================================
+16. ANALYTICS
+============================================================
+
+Implement:
+
+7D
+30D
+90D
+365D
+All time
+
+Charts:
+
+WPM
+accuracy
+consistency
+practice time
+errors
+weak keys
+transitions
+
+Lazy-load expensive chart code.
+
+============================================================
+17. THEMES
+============================================================
+
+Implement:
+
+Forest
+Ivory
+Midnight
+OLED
+Minimal
+Classic
+High Contrast
+
+Use CSS variables.
+
+Persist user preferences through the backend when authenticated.
+
+============================================================
+18. KEYBOARD
+============================================================
+
+Implement:
+
+QWERTY
+AZERTY
+QWERTZ
+Dvorak
+Colemak
+
+Visualize:
+
+target key
+pressed key
+correct
+incorrect
+weak keys
+
+Do not depend exclusively on color.
+
+============================================================
+19. PROGRAMMING TYPING
+============================================================
+
+Implement language selection:
+
+Python
+Java
+JavaScript
+TypeScript
+Go
+SQL
+HTML
+CSS
+
+Content comes from the API.
+
+Do not hardcode content in UI.
+
+============================================================
+20. ACHIEVEMENTS / STREAKS
+============================================================
+
+Implement:
+
+achievement grid
+achievement details
+earned state
+locked state
+streak display
+longest streak
+current streak
+activity
+
+============================================================
+21. LEADERBOARD
+============================================================
+
+Tabs:
+
+Global
+Country
+Weekly
+Monthly
+All-time
+
+Implement:
+
+pagination
+loading
+empty
+error
+current-user position
+
+Never allow frontend mutation of official ranking.
+
+============================================================
+22. COMPETITION UI
+============================================================
+
+Build:
+
+competition list
+create room
+join room
+private room
+ready state
+countdown
+typing race
+participant progress
+finish state
+results
+reconnect state
+disconnected state
+
+Integrate with WebSockets supplied by backend.
+
+============================================================
+23. PROFILE
+============================================================
+
+Build:
+
+profile
+statistics
+achievements
+streak
+typing history
+privacy settings
+
+============================================================
+24. SETTINGS
+============================================================
+
+Settings:
+
+account
+appearance
+typing
+sound
+caret
+keyboard
+language
+privacy
+notifications
+
+============================================================
+25. ACCESSIBILITY
+============================================================
+
+Implement:
+
+semantic HTML
+keyboard navigation
+focus management
+screen reader support
+reduced motion
+high contrast
+accessible forms
+accessible dialogs
+visible focus states
+
+Do not rely only on color.
+
+============================================================
+26. RESPONSIVENESS
+============================================================
+
+Test:
+
+mobile
+tablet
+laptop
+desktop
+ultrawide
+
+No broken overflow.
+
+No unreadable typography.
+
+No inaccessible controls.
+
+============================================================
+27. PERFORMANCE
+============================================================
+
+Optimize:
+
+LCP
+INP
+CLS
+TTFB
+
+Avoid:
+
+unnecessary hydration
+large client bundles
+unused dependencies
+full-page rerenders
+network requests per keystroke
+
+Typing performance is a priority.
+
+============================================================
+28. SEO
+============================================================
+
+Implement:
+
+metadata
+canonical
+OpenGraph
+Twitter metadata
+sitemap
+robots
+structured data where appropriate
+
+Authenticated pages should not be unnecessarily indexed.
+
+============================================================
+29. API INTEGRATION
+============================================================
+
+Use the API contract from Phase 1.
+
+Do not invent endpoints casually.
+
+Centralize API clients.
+
+Handle:
+
+loading
+errors
+timeouts
+unauthorized
+forbidden
+rate limits
+network failures
+
+============================================================
+30. SECURITY
+============================================================
+
+Never expose:
+
+secret Supabase keys
+server credentials
+tokens unnecessarily
+internal errors
+
+Validate user-controlled content.
+
+Never render arbitrary HTML.
+
+Protect authenticated routes.
+
+============================================================
+31. FINAL FRONTEND QA
+============================================================
+
+Run:
+
+lint
+typecheck
+unit tests
+E2E tests
+production build
+
+Test:
+
+signup
+login
+onboarding
+lesson
+practice
+typing
+results
+analytics
+profile
+settings
+leaderboard
+competition
+
+Test refresh, logout, expired sessions and network failures.
+
+============================================================
+32. FINAL BRAND AUDIT
+============================================================
+
+Search entire frontend for:
+
+TypeForge
+TYPEFORGE
+typeforge
+
+ZERO references allowed.
+
+Verify:
+
+logo
+favicon
+metadata
+navbar
+footer
+auth
+loading
+error pages
+
+all use ANDIKA.
+
+============================================================
+33. IMPORTANT
+============================================================
+
+Do not implement backend business logic inside the frontend.
+
+Do not create fake API responses and leave them as production
+implementation.
+
+If the backend endpoint is not yet implemented, use a clearly
+defined typed integration boundary and document it.
+
+Do not silently invent backend behavior.
+
+============================================================
+END OF FRONTEND PHASE
+============================================================

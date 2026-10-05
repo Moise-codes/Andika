@@ -1,0 +1,36 @@
+# AWS Region
+aws_region = "us-east-1"
+
+# Project Configuration
+project_name = "andika"
+environment  = "production"
+
+# Database Configuration
+db_instance_class = "db.t3.micro"
+db_storage        = 20
+db_username       = "andika"
+db_password       = "your_secure_password_here"
+
+# Backend ECS Configuration
+backend_cpu           = 256
+backend_memory        = 512
+backend_desired_count = 2
+
+# Frontend ECS Configuration
+frontend_cpu           = 256
+frontend_memory        = 512
+frontend_desired_count = 2
+
+# Backend URL (for frontend to connect)
+backend_url = "http://andika-backend-alb-1234567890.us-east-1.elb.amazonaws.com:3001"
+
+# SSL Certificate (leave empty if using HTTP only)
+ssl_certificate_arn = ""
+
+# Supabase Configuration
+supabase_url              = "https://your-project.supabase.co"
+supabase_service_role_key = "your-service-role-key"
+supabase_anon_key         = "your-anon-key"
+
+# JWT Secret
+jwt_secret = "your-jwt-secret-here"

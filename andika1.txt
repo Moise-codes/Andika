@@ -1,0 +1,1243 @@
+﻿============================================================
+ANDIKA
+PHASE 1 — PROJECT DEFINITION, PRODUCT SPECIFICATION &
+ARCHITECTURE
+============================================================
+
+ROLE
+
+Act as a Principal Product Engineer, Senior Software Architect,
+Product Designer, Security Architect, and Technical Product Manager.
+
+Your task in this phase is NOT to build the application.
+
+Your task is to fully understand, define, document, and architect
+the product called ANDIKA before implementation begins.
+
+Do not start frontend or backend implementation in this phase.
+
+The output of this phase will become the source of truth for the
+frontend and backend implementation phases.
+
+============================================================
+1. PRODUCT IDENTITY
+============================================================
+
+Product name:
+
+ANDIKA
+
+Previous temporary name:
+
+TypeForge
+
+TypeForge is obsolete.
+
+The final product MUST be called:
+
+ANDIKA
+
+No TypeForge references should exist in the final system.
+
+Product tagline:
+
+"Learn. Practice. Master Typing."
+
+Core product philosophy:
+
+LEARN
+→ PRACTICE
+→ TEST
+→ UNDERSTAND
+→ IMPROVE
+→ COMPETE
+→ REPEAT
+
+============================================================
+2. PRODUCT DESCRIPTION
+============================================================
+
+ANDIKA is a modern typing-learning and typing-performance platform.
+
+It combines:
+
+- structured typing education
+- typing practice
+- typing tests
+- performance analytics
+- personalized recommendations
+- achievements
+- streaks
+- leaderboards
+- real-time typing competitions
+- programming typing
+- user profiles
+- progress tracking
+
+The objective is to create a serious product that helps users move
+from learning basic keyboard skills to developing high-speed,
+high-accuracy typing ability.
+
+ANDIKA should serve:
+
+- beginners
+- students
+- professionals
+- developers
+- competitive typists
+- people improving typing accuracy
+- people improving typing speed
+
+============================================================
+3. PRODUCT INSPIRATION
+============================================================
+
+Study established typing products such as:
+
+Monkeytype
+TypingClub
+
+Use them to understand:
+
+- feature patterns
+- typing workflows
+- learning progression
+- testing systems
+- performance metrics
+- customization
+- competitive features
+
+However:
+
+DO NOT COPY THEIR:
+
+- source code
+- branding
+- logos
+- proprietary assets
+- exact layouts
+- proprietary content
+- copyrighted text
+- implementation details
+
+ANDIKA must be an original product.
+
+The visual direction is additionally inspired by the supplied
+Circlo reference.
+
+Use its general design qualities:
+
+- warm ivory
+- deep forest green
+- editorial whitespace
+- restrained interface
+- rounded controls
+- subtle borders
+- premium minimalism
+
+Do NOT copy Circlo's design.
+
+============================================================
+4. CORE PRODUCT AREAS
+============================================================
+
+Define the complete product around these areas:
+
+1. Marketing website
+2. Authentication
+3. Onboarding
+4. Dashboard
+5. Learning
+6. Practice
+7. Typing tests
+8. Typing results
+9. "How You Typed"
+10. Analytics
+11. Personalized improvement
+12. Themes
+13. Keyboard layouts
+14. Achievements
+15. Streaks
+16. Leaderboards
+17. Real-time competitions
+18. Programming typing
+19. Profile
+20. Settings
+21. Notifications
+22. Administration
+23. Security
+24. Future monetization
+
+============================================================
+5. FREE-FIRST BUSINESS MODEL
+============================================================
+
+ANDIKA launches as a free-first product.
+
+Core functionality should not be artificially crippled.
+
+Initial free functionality:
+
+- learning
+- practice
+- typing tests
+- core analytics
+- themes
+- keyboard layouts
+- achievements
+- streaks
+- basic leaderboards
+- programming typing
+
+Architect future monetization without implementing unnecessary
+payment complexity during the initial release.
+
+Future possibilities:
+
+ANDIKA PRO
+TEAMS
+SCHOOLS
+ENTERPRISE
+
+Future monetization must use an entitlement-based architecture,
+not scattered premium checks throughout the frontend.
+
+============================================================
+6. LEARNING SYSTEM
+============================================================
+
+The learning system should progress logically.
+
+Suggested curriculum:
+
+1. Keyboard fundamentals
+2. Home row
+3. Top row
+4. Bottom row
+5. Numbers
+6. Punctuation
+7. Capitalization
+8. Common words
+9. Sentences
+10. Paragraphs
+11. Accuracy
+12. Speed
+13. Professional typing
+14. Programming typing
+
+Architecture:
+
+Course
+→ Module
+→ Lesson
+→ Exercise
+→ Assessment
+
+Lessons should support:
+
+- objectives
+- instructions
+- keyboard visualization
+- typing exercises
+- accuracy requirements
+- speed targets
+- completion rules
+- progress tracking
+
+Track:
+
+- attempts
+- completion
+- accuracy
+- WPM
+- errors
+- time spent
+
+============================================================
+7. PRACTICE SYSTEM
+============================================================
+
+Practice modes:
+
+- weak keys
+- accuracy
+- speed
+- words
+- quotes
+- numbers
+- punctuation
+- custom text
+- mixed practice
+- programming
+
+Practice should eventually adapt to the user's actual weaknesses.
+
+============================================================
+8. TYPING TEST SYSTEM
+============================================================
+
+Time tests:
+
+15 seconds
+30 seconds
+60 seconds
+120 seconds
+Custom
+
+Word tests:
+
+10 words
+25 words
+50 words
+100 words
+Custom
+
+Content modes:
+
+- plain text
+- quotes
+- custom text
+- numbers
+- punctuation
+- capitalization
+- programming
+
+Typing test UI must support:
+
+- timer
+- WPM
+- accuracy
+- progress
+- caret
+- typing content
+- restart
+- completion
+- result generation
+
+============================================================
+9. TYPING ENGINE
+============================================================
+
+Treat the typing engine as a core technical system.
+
+It should track:
+
+- expected character
+- actual character
+- correct characters
+- incorrect characters
+- backspaces
+- elapsed time
+- character timing
+- key timing
+- key transitions
+- errors
+- completed characters
+- remaining characters
+- raw WPM
+- net WPM
+- accuracy
+- consistency
+
+Performance target:
+
+100 WPM
+150 WPM
+200 WPM
+
+The application must remain responsive at these speeds.
+
+Do NOT send network requests for every keystroke.
+
+The browser should handle real-time typing locally.
+
+The server validates official results.
+
+============================================================
+10. HOW YOU TYPED
+============================================================
+
+This is a signature ANDIKA feature.
+
+After a test, provide:
+
+- WPM
+- raw WPM
+- accuracy
+- consistency
+- characters
+- correct characters
+- incorrect characters
+- backspaces
+- duration
+- error count
+
+Advanced analysis:
+
+- speed over time
+- accuracy over time
+- error distribution
+- weak keys
+- slow keys
+- slow transitions
+- repeated mistakes
+- difficult punctuation
+- difficult words
+- consistency
+- recommended practice
+
+Example recommendation:
+
+"You slowed down during T → H transitions."
+
+Recommendations must be based on real user data.
+
+============================================================
+11. ANALYTICS
+============================================================
+
+Dashboard metrics:
+
+- current WPM
+- average WPM
+- best WPM
+- accuracy
+- consistency
+- practice time
+- tests completed
+- streak
+- daily goal
+
+Analytics:
+
+- WPM progression
+- accuracy progression
+- consistency
+- practice time
+- errors
+- weak keys
+- key transitions
+
+Ranges:
+
+7 days
+30 days
+90 days
+365 days
+All time
+
+Avoid transferring unnecessarily large datasets to the client.
+
+============================================================
+12. PERSONALIZED IMPROVEMENT
+============================================================
+
+Initial recommendation engine:
+
+DETERMINISTIC RULES.
+
+Do not introduce ML simply for marketing.
+
+Inputs:
+
+- key error rate
+- key frequency
+- transition error rate
+- average key latency
+- accuracy
+- WPM
+- recent sessions
+- historical performance
+- lesson performance
+
+Outputs:
+
+- recommended lesson
+- recommended practice
+- weak keys
+- recommended difficulty
+- recommended duration
+
+Design the architecture so ML can later replace or augment these
+rules.
+
+============================================================
+13. THEMES
+============================================================
+
+Initial themes:
+
+Forest
+Ivory
+Midnight
+OLED
+Minimal
+Classic
+High Contrast
+
+Theme architecture must use centralized CSS variables.
+
+============================================================
+14. KEYBOARD LAYOUTS
+============================================================
+
+Support:
+
+QWERTY
+AZERTY
+QWERTZ
+Dvorak
+Colemak
+
+Keyboard visualization must adapt to the selected layout.
+
+============================================================
+15. SOUND / CARET SETTINGS
+============================================================
+
+Sounds:
+
+Off
+Mechanical
+Soft
+Typewriter
+Minimal
+
+Allow:
+
+volume
+
+Caret:
+
+Block
+Line
+Underline
+
+Caret behavior:
+
+Blink
+Static
+Smooth
+
+Respect reduced-motion preferences.
+
+============================================================
+16. PROGRAMMING TYPING
+============================================================
+
+Support:
+
+Python
+Java
+JavaScript
+TypeScript
+Go
+SQL
+HTML
+CSS
+
+Content should be structured data.
+
+Do not hardcode programming content into React components.
+
+Use original or appropriately licensed content.
+
+============================================================
+17. ACHIEVEMENTS
+============================================================
+
+Achievement categories:
+
+Speed
+Accuracy
+Learning
+Practice
+Streak
+Competition
+Milestones
+
+Examples:
+
+First Test
+1,000 Characters
+7 Day Streak
+100 WPM
+99% Accuracy
+Course Completed
+
+Achievement rules should be data-driven.
+
+============================================================
+18. STREAKS
+============================================================
+
+Track:
+
+- current streak
+- longest streak
+- daily activity
+- weekly activity
+
+Account for:
+
+- timezone
+- date boundaries
+- missed days
+- server time
+
+Do not rely entirely on the client clock.
+
+============================================================
+19. LEADERBOARDS
+============================================================
+
+Support:
+
+Global
+Country
+Weekly
+Monthly
+All-time
+
+Display:
+
+Rank
+Username
+WPM
+Accuracy
+Country when the user chooses to expose it
+
+Leaderboard data must come from validated server-side results.
+
+Users must not be able to directly modify ranking data.
+
+============================================================
+20. REAL-TIME COMPETITION
+============================================================
+
+Support the architecture for:
+
+- public races
+- private rooms
+- friend challenges
+- real-time battles
+
+Lifecycle:
+
+Create
+Join
+Ready
+Countdown
+Start
+Typing
+Finish
+Validate
+Results
+Disconnect
+Reconnect
+
+Use WebSockets.
+
+Do not send unnecessary raw keystroke traffic to every client.
+
+============================================================
+21. PROFILE
+============================================================
+
+Profile:
+
+- avatar
+- username
+- joined date
+- best WPM
+- average WPM
+- accuracy
+- tests
+- practice time
+- achievements
+- streak
+
+Privacy controls:
+
+- public profile
+- leaderboard visibility
+- country visibility
+- statistics visibility
+
+============================================================
+22. AUTHENTICATION
+============================================================
+
+Use:
+
+Supabase Auth
+
+Support:
+
+- signup
+- login
+- logout
+- email verification
+- forgot password
+- password reset
+- Google OAuth
+- session refresh
+- account deletion
+
+Authentication is separate from authorization.
+
+NestJS must enforce application authorization.
+
+============================================================
+23. DATABASE
+============================================================
+
+Use:
+
+Supabase PostgreSQL
+
+Proposed entities:
+
+profiles
+
+courses
+modules
+lessons
+lesson_exercises
+lesson_progress
+
+typing_sessions
+typing_results
+typing_errors
+key_metrics
+key_transition_metrics
+
+practice_sessions
+
+achievements
+user_achievements
+
+streaks
+
+leaderboard data
+
+competitions
+battle_rooms
+competition_participants
+
+typing_content
+programming_content
+
+settings
+typing_settings
+
+notifications
+
+audit_logs
+
+Future:
+
+plans
+subscriptions
+entitlements
+
+The final schema must be based on real access patterns rather than
+blindly implementing every table listed above.
+
+============================================================
+24. SUPABASE SECURITY
+============================================================
+
+Use Row Level Security for exposed user data.
+
+Users must only access data they are authorized to access.
+
+Users must never be able to:
+
+- modify official scores
+- modify leaderboard records
+- award themselves achievements
+- modify another user's private data
+- change their own role
+
+Browser:
+
+Use publishable Supabase credentials only.
+
+Server:
+
+Keep elevated/secret credentials server-side.
+
+============================================================
+25. BACKEND ARCHITECTURE
+============================================================
+
+Use:
+
+NestJS
+
+Initial architecture:
+
+MODULAR MONOLITH
+
+Modules:
+
+Auth
+Users
+Profiles
+Courses
+Lessons
+Typing
+Practice
+Analytics
+Achievements
+Streaks
+Leaderboard
+Competition
+Battle
+Content
+Notifications
+Admin
+Health
+
+Do not prematurely create microservices.
+
+============================================================
+26. FRONTEND ARCHITECTURE
+============================================================
+
+Use:
+
+Next.js
+React
+TypeScript
+App Router
+Tailwind CSS
+shadcn/ui
+Phosphor Icons
+
+Prefer:
+
+Server Components
+
+Use Client Components only where interactivity requires them.
+
+============================================================
+27. BRANDING
+============================================================
+
+Create original ANDIKA branding.
+
+Brand palette:
+
+Forest:
+
+#415239
+#34442F
+#29372A
+
+Ivory:
+
+#FAF8F5
+#F4F0E7
+
+Neutral:
+
+#E8E5DD
+
+Text:
+
+#30302E
+#696A64
+
+Border:
+
+#D9D7CF
+
+Create:
+
+andika-logo.svg
+andika-mark.svg
+andika-wordmark.svg
+
+Create favicon system:
+
+/app/icon.svg
+/app/apple-icon.svg
+
+and appropriate PNG variants where required.
+
+Favicon must use the ANDIKA mark, not the full wordmark.
+
+The favicon must correspond to the official forest/ivory identity.
+
+============================================================
+28. LANDING PAGE
+============================================================
+
+Landing page sections:
+
+Announcement
+Navigation
+Hero
+Interactive typing demo
+Product philosophy
+Why typing matters
+Learn
+Practice
+Test
+How You Typed
+Personalized improvement
+Analytics
+Themes
+Keyboard layouts
+Programming typing
+Achievements
+Streaks
+Leaderboards
+Competition
+Learning journey
+Interface preview
+Accessibility
+Security
+Pricing
+FAQ
+Final CTA
+Footer
+
+The landing page must feel like a real product.
+
+Do not use fake testimonials or fake statistics.
+
+============================================================
+29. DASHBOARD
+============================================================
+
+Dashboard should contain:
+
+- welcome
+- today's goal
+- streak
+- recommended lesson
+- course progress
+- current WPM
+- average WPM
+- best WPM
+- accuracy
+- consistency
+- recent performance
+- weak keys
+- recent tests
+- achievements
+- leaderboard
+- programming typing
+
+Quick actions:
+
+Start Practice
+Take Test
+Continue Lesson
+View Analytics
+
+============================================================
+30. SECURITY REQUIREMENTS
+============================================================
+
+Threat model:
+
+XSS
+CSRF
+SQL injection
+IDOR
+broken access control
+mass assignment
+credential stuffing
+brute force
+session hijacking
+account enumeration
+rate abuse
+WebSocket abuse
+score manipulation
+leaderboard manipulation
+replay attacks
+malformed input
+oversized payloads
+dependency vulnerabilities
+secret leakage
+
+Implement architecture for:
+
+- validation
+- authorization
+- rate limiting
+- security headers
+- CORS
+- secure sessions
+- secret management
+- audit logging
+- least privilege
+
+============================================================
+31. PERFORMANCE REQUIREMENTS
+============================================================
+
+Optimize:
+
+LCP
+INP
+CLS
+TTFB
+
+Typing performance is especially important.
+
+No:
+
+network request per keystroke
+full-page rerender per keystroke
+unnecessary client-side hydration
+huge initial JavaScript bundles
+
+============================================================
+32. ACCESSIBILITY
+============================================================
+
+Support:
+
+keyboard navigation
+screen readers
+focus indicators
+semantic HTML
+reduced motion
+high contrast
+accessible forms
+accessible dialogs
+non-color indicators
+
+============================================================
+33. RESPONSIVE DESIGN
+============================================================
+
+Support:
+
+mobile
+tablet
+laptop
+desktop
+ultrawide
+
+Mobile must remain useful for:
+
+learning
+analytics
+profile
+settings
+
+Typing experience should prioritize physical keyboards.
+
+============================================================
+34. INTERNATIONALIZATION
+============================================================
+
+Initial:
+
+English
+French
+Kinyarwanda
+
+Future:
+
+Swahili
+Spanish
+Portuguese
+
+Do not hardcode user-facing strings.
+
+============================================================
+35. OBSERVABILITY
+============================================================
+
+Plan:
+
+structured logs
+request IDs
+metrics
+health checks
+readiness checks
+error tracking
+database monitoring
+WebSocket monitoring
+
+Never log:
+
+passwords
+tokens
+secrets
+
+============================================================
+36. AWS DEPLOYMENT TARGET
+============================================================
+
+Frontend:
+
+Vercel initially.
+
+Backend:
+
+AWS ECS/Fargate.
+
+Potential infrastructure:
+
+ECR
+ALB
+WAF
+CloudFront
+CloudWatch
+Secrets Manager
+S3
+SQS
+Redis
+
+Only introduce infrastructure when justified.
+
+============================================================
+37. CI/CD
+============================================================
+
+Pipeline:
+
+PR
+→ lint
+→ typecheck
+→ unit tests
+→ integration tests
+→ security checks
+→ build
+→ container scan
+→ staging
+→ smoke tests
+→ production
+
+============================================================
+38. DOCUMENTATION OUTPUT OF THIS PHASE
+============================================================
+
+Before implementation, create documentation covering:
+
+1. Product Requirements
+2. Functional Requirements
+3. Non-functional Requirements
+4. User Personas
+5. User Journeys
+6. Feature Map
+7. Information Architecture
+8. Frontend Architecture
+9. Backend Architecture
+10. Database Model
+11. Authentication Architecture
+12. Authorization Model
+13. API Contract
+14. WebSocket Contract
+15. Typing Engine Specification
+16. Analytics Specification
+17. Recommendation Engine Specification
+18. Security Threat Model
+19. Performance Requirements
+20. Accessibility Requirements
+21. Deployment Architecture
+22. CI/CD Architecture
+23. Testing Strategy
+24. Environment Variables
+25. Future Extension Points
+
+============================================================
+39. REQUIRED ARCHITECTURE DIAGRAMS
+============================================================
+
+Produce diagrams/documentation for:
+
+System architecture
+
+Frontend architecture
+
+Backend module architecture
+
+Database relationships
+
+Authentication flow
+
+Typing test lifecycle
+
+Typing result validation
+
+Analytics pipeline
+
+Leaderboard flow
+
+Competition WebSocket lifecycle
+
+Deployment architecture
+
+============================================================
+40. ACCEPTANCE CRITERIA
+============================================================
+
+Every major feature must have explicit acceptance criteria.
+
+Example:
+
+Typing test:
+
+Given a user starts a 60-second test,
+when the timer reaches 60 seconds,
+then typing stops,
+then the client calculates a provisional result,
+then the server validates the result,
+then the validated result is persisted,
+then the user sees the result analysis.
+
+Do this for every major system.
+
+============================================================
+41. IMPORTANT
+============================================================
+
+DO NOT IMPLEMENT THE PRODUCT YET.
+
+This phase is architecture and product definition.
+
+Do not start generating hundreds of source files.
+
+Do not build a fake frontend.
+
+Do not build a fake backend.
+
+Do not make assumptions about requirements that can be resolved by
+inspection.
+
+Inspect the repository and any SRS/documentation available first.
+
+============================================================
+42. FINAL OUTPUT
+============================================================
+
+At the end of this phase, provide:
+
+A complete product specification
+A requirements matrix
+Architecture decisions
+Database model
+API contract
+WebSocket contract
+Security model
+Performance model
+Testing strategy
+Deployment architecture
+Implementation roadmap
+
+Then STOP.
+
+Do not begin Phase 2 automatically.
+
+============================================================
+END OF PHASE 1
+============================================================

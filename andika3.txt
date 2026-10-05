@@ -1,0 +1,1047 @@
+﻿============================================================
+ANDIKA
+PHASE 2B — BACKEND IMPLEMENTATION
+============================================================
+
+ROLE
+
+Act as a Principal Backend Engineer, NestJS Architect, PostgreSQL
+Engineer, Security Engineer, API Architect, Distributed Systems
+Engineer, and DevOps Engineer.
+
+Implement the ANDIKA backend according to:
+
+1. Phase 1 product specification
+2. Phase 1 requirements matrix
+3. Approved database architecture
+4. Approved API contract
+5. Approved WebSocket contract
+6. Frontend integration requirements
+
+Do not independently redefine the product.
+
+============================================================
+1. STACK
+============================================================
+
+Backend:
+
+NestJS
+TypeScript
+PostgreSQL
+Supabase
+REST
+WebSockets
+
+ORM:
+
+Use the ORM selected during Phase 1.
+
+Choose:
+
+Prisma OR Drizzle
+
+Never install both.
+
+============================================================
+2. ARCHITECTURE
+============================================================
+
+Use a modular monolith.
+
+Modules:
+
+Auth
+Users
+Profiles
+Courses
+Lessons
+Typing
+Practice
+Analytics
+Achievements
+Streaks
+Leaderboard
+Competition
+Battle
+Content
+Notifications
+Admin
+Health
+
+Architecture:
+
+Controller
+→ Service
+→ Repository/Data Access
+→ Database
+
+Controllers must remain thin.
+
+Business logic belongs in services/domain logic.
+
+============================================================
+3. AUTHENTICATION
+============================================================
+
+Use Supabase Auth.
+
+Support:
+
+signup
+login
+logout
+email verification
+password reset
+Google OAuth
+session refresh
+account deletion
+
+NestJS must validate authenticated identity before protected
+operations.
+
+Authentication does not equal authorization.
+
+============================================================
+4. AUTHORIZATION
+============================================================
+
+Roles:
+
+USER
+MODERATOR
+ADMIN
+
+Enforce authorization server-side.
+
+Users cannot:
+
+access another user's private data
+change their role
+award themselves achievements
+modify official results
+modify leaderboard records
+modify another user's profile
+
+Moderators and admins must have clearly separated permissions.
+
+============================================================
+5. DATABASE
+============================================================
+
+Use Supabase PostgreSQL.
+
+Implement migrations.
+
+Core entities:
+
+profiles
+
+courses
+modules
+lessons
+lesson_exercises
+lesson_progress
+
+typing_sessions
+typing_results
+typing_errors
+key_metrics
+key_transition_metrics
+
+practice_sessions
+
+achievements
+user_achievements
+
+streaks
+
+leaderboard data
+
+competitions
+battle_rooms
+competition_participants
+
+typing_content
+programming_content
+
+settings
+typing_settings
+
+notifications
+
+audit_logs
+
+Use actual query patterns to determine:
+
+indexes
+constraints
+relationships
+unique keys
+pagination strategy
+
+Avoid unnecessary tables.
+
+============================================================
+6. ROW LEVEL SECURITY
+============================================================
+
+Enable appropriate RLS policies on exposed user data.
+
+Examples:
+
+User can read their own typing history.
+
+User can create their own session.
+
+User cannot modify another user's session.
+
+User cannot modify validated results.
+
+User cannot modify leaderboard records.
+
+User cannot assign achievements.
+
+User cannot modify another user's private profile.
+
+Test both:
+
+ALLOW
+
+and
+
+DENY
+
+cases.
+
+============================================================
+7. API
+============================================================
+
+Base:
+
+/api/v1
+
+AUTH:
+
+POST /auth/signup
+POST /auth/login
+POST /auth/logout
+POST /auth/refresh
+GET /auth/me
+POST /auth/forgot-password
+POST /auth/reset-password
+
+USERS:
+
+GET /users/me
+PATCH /users/me
+DELETE /users/me
+
+COURSES:
+
+GET /courses
+GET /courses/:id
+GET /courses/:id/modules
+
+LESSONS:
+
+GET /lessons/:id
+GET /lessons/:id/progress
+POST /lessons/:id/progress
+
+TYPING:
+
+POST /typing/sessions
+GET /typing/sessions
+GET /typing/sessions/:id
+POST /typing/sessions/:id/complete
+
+RESULTS:
+
+GET /typing/results/:id
+GET /typing/results/:id/analysis
+
+PRACTICE:
+
+POST /practice/sessions
+GET /practice/recommendations
+
+ANALYTICS:
+
+GET /analytics/overview
+GET /analytics/performance
+GET /analytics/weak-keys
+GET /analytics/transitions
+
+ACHIEVEMENTS:
+
+GET /achievements
+GET /achievements/me
+
+LEADERBOARD:
+
+GET /leaderboards/global
+GET /leaderboards/country
+GET /leaderboards/weekly
+GET /leaderboards/monthly
+GET /leaderboards/all-time
+
+COMPETITION:
+
+POST /competitions
+GET /competitions
+POST /competitions/:id/join
+POST /competitions/:id/leave
+
+PROFILE:
+
+GET /profiles/:username
+
+HEALTH:
+
+GET /health
+GET /health/live
+GET /health/ready
+
+Follow the approved Phase 1 API contract if it differs.
+
+============================================================
+8. VALIDATION
+============================================================
+
+Every external request must be validated.
+
+Validate:
+
+body
+params
+query
+headers where necessary
+WebSocket payloads
+
+Reject:
+
+unknown/malicious input
+oversized payloads
+invalid IDs
+invalid enum values
+invalid state transitions
+
+Do not trust client-generated values.
+
+============================================================
+9. TYPING SESSION SYSTEM
+============================================================
+
+A typing session must have a controlled lifecycle.
+
+Example:
+
+CREATED
+→ STARTED
+→ ACTIVE
+→ COMPLETED
+→ VALIDATED
+
+Possible failure states:
+
+EXPIRED
+CANCELLED
+INVALID
+FLAGGED
+
+The server should maintain authoritative session state.
+
+============================================================
+10. RESULT VALIDATION
+============================================================
+
+The frontend may calculate provisional WPM and accuracy.
+
+The backend must validate official results.
+
+Validate:
+
+session ownership
+session state
+content
+duration
+character count
+completion
+result consistency
+impossible values
+duplicate submissions
+replay attempts
+timing anomalies where applicable
+
+Do not blindly trust:
+
+client WPM
+client accuracy
+client score
+client leaderboard position
+
+============================================================
+11. WPM / ACCURACY
+============================================================
+
+Implement one authoritative calculation definition.
+
+Common WPM basis:
+
+characters / 5 / minutes
+
+Support:
+
+raw WPM
+net WPM
+accuracy
+consistency
+
+Document the exact formulas.
+
+Frontend and backend must use compatible definitions.
+
+============================================================
+12. HOW YOU TYPED
+============================================================
+
+Backend must persist enough information to support:
+
+speed over time
+accuracy over time
+errors
+weak keys
+slow keys
+key transitions
+consistency
+recommendations
+
+Do not store excessive raw data without a reason.
+
+Balance analytical usefulness with:
+
+storage
+privacy
+performance
+
+============================================================
+13. ANALYTICS
+============================================================
+
+Provide API support for:
+
+overview
+WPM history
+accuracy history
+consistency
+practice time
+errors
+weak keys
+transitions
+
+Support:
+
+7D
+30D
+90D
+365D
+all time
+
+Avoid unbounded database queries.
+
+Use aggregation strategies where appropriate.
+
+============================================================
+14. RECOMMENDATION ENGINE
+============================================================
+
+Implement deterministic recommendations.
+
+Inputs:
+
+key error rate
+key latency
+transition errors
+recent results
+historical results
+lesson performance
+
+Outputs:
+
+weak keys
+recommended practice
+recommended lesson
+difficulty
+duration
+
+Design an interface that can later accept an ML-based recommender.
+
+Do not introduce an LLM unnecessarily.
+
+============================================================
+15. ACHIEVEMENTS
+============================================================
+
+Create data-driven achievement rules.
+
+Examples:
+
+First Test
+1,000 Characters
+7 Day Streak
+100 WPM
+99% Accuracy
+Course Completed
+
+Achievement calculation must happen server-side.
+
+Users cannot award themselves achievements.
+
+Prevent duplicate awards.
+
+============================================================
+16. STREAKS
+============================================================
+
+Calculate streaks server-side.
+
+Account for:
+
+user timezone
+calendar boundaries
+practice activity
+missed days
+
+Do not trust client date calculations.
+
+============================================================
+17. LEADERBOARDS
+============================================================
+
+Generate leaderboard entries from validated results.
+
+Support:
+
+global
+country
+weekly
+monthly
+all-time
+
+Use:
+
+pagination
+indexes
+efficient sorting
+validated source data
+
+Do not allow clients to write ranking values directly.
+
+============================================================
+18. COMPETITIONS
+============================================================
+
+Implement WebSocket architecture.
+
+Lifecycle:
+
+create
+join
+ready
+countdown
+start
+typing
+finish
+validate
+results
+disconnect
+reconnect
+
+Authenticate WebSocket connections.
+
+Validate every event.
+
+Protect against:
+
+fake completion
+room manipulation
+unauthorized participants
+malformed events
+event spam
+oversized payloads
+replay events
+invalid state transitions
+
+============================================================
+19. WEBSOCKET EFFICIENCY
+============================================================
+
+Do not broadcast unnecessary raw keystrokes.
+
+Only transmit the minimum information required by participants.
+
+Design for horizontal scaling in the future.
+
+If Redis/pub-sub is needed for multi-instance WebSocket scaling,
+document why before introducing it.
+
+============================================================
+20. CONTENT SYSTEM
+============================================================
+
+Typing content must be database-backed.
+
+Support:
+
+language
+difficulty
+category
+word count
+punctuation
+numbers
+capitalization
+quotes
+custom content
+programming language
+
+Do not hardcode production content in controllers.
+
+============================================================
+21. PROFILE SYSTEM
+============================================================
+
+Support:
+
+username
+avatar
+joined date
+public statistics
+privacy settings
+country visibility
+leaderboard visibility
+
+Enforce privacy server-side.
+
+============================================================
+22. SECURITY
+============================================================
+
+Protect against:
+
+XSS
+CSRF where relevant
+SQL injection
+IDOR
+broken authorization
+mass assignment
+credential stuffing
+brute force
+session abuse
+account enumeration
+rate abuse
+WebSocket abuse
+score manipulation
+leaderboard manipulation
+replay attacks
+malformed requests
+oversized requests
+dependency vulnerabilities
+
+Use:
+
+strict DTO validation
+guards
+rate limiting
+Helmet/security headers
+CORS
+secure configuration
+audit logs
+
+============================================================
+23. RATE LIMITING
+============================================================
+
+Different limits for:
+
+login
+signup
+password reset
+verification
+competition creation
+WebSocket events
+API reads
+normal authenticated operations
+
+Do not rate-limit typing in a way that harms the user experience.
+
+============================================================
+24. ERROR HANDLING
+============================================================
+
+Use consistent API errors.
+
+Example:
+
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid request",
+    "details": {}
+  }
+}
+
+Do not expose:
+
+stack traces
+SQL errors
+internal paths
+secrets
+tokens
+
+============================================================
+25. DATABASE PERFORMANCE
+============================================================
+
+Avoid:
+
+N+1 queries
+SELECT * on large tables
+unbounded queries
+missing indexes
+large unnecessary joins
+
+Use:
+
+pagination
+cursor pagination where appropriate
+indexes
+aggregation
+constraints
+
+Measure before introducing caching.
+
+============================================================
+26. AUDIT LOGGING
+============================================================
+
+Record security-sensitive events.
+
+Examples:
+
+login
+logout
+password/security events where appropriate
+role changes
+admin actions
+suspicious score
+leaderboard moderation
+account deletion
+
+Never log secrets.
+
+============================================================
+27. HEALTH
+============================================================
+
+Implement:
+
+/health
+/health/live
+/health/ready
+
+Health checks should distinguish:
+
+application alive
+
+from:
+
+dependencies ready
+
+============================================================
+28. TESTING
+============================================================
+
+Unit tests:
+
+WPM
+accuracy
+consistency
+typing validation
+recommendations
+achievements
+streaks
+authorization
+
+Integration:
+
+auth
+database
+RLS
+typing sessions
+results
+analytics
+leaderboards
+
+WebSocket tests:
+
+join
+ready
+start
+typing
+finish
+disconnect
+reconnect
+invalid events
+
+Security:
+
+IDOR
+authorization
+rate limits
+malformed requests
+score manipulation
+
+============================================================
+29. DATABASE TESTING
+============================================================
+
+Test:
+
+foreign keys
+unique constraints
+RLS
+authorization
+cascade behavior
+invalid ownership
+duplicate submissions
+
+Test both positive and negative cases.
+
+============================================================
+30. ENVIRONMENT
+============================================================
+
+Create:
+
+.env.example
+
+Never commit:
+
+production secrets
+Supabase secret keys
+database passwords
+API keys
+
+Document every variable.
+
+Separate:
+
+development
+test
+staging
+production
+
+============================================================
+31. DOCKER
+============================================================
+
+Production Docker image:
+
+multi-stage
+minimal
+non-root
+healthcheck
+no secrets
+production dependencies only
+
+============================================================
+32. OBSERVABILITY
+============================================================
+
+Implement:
+
+structured logging
+request IDs
+metrics
+health checks
+database monitoring
+WebSocket monitoring
+error tracking
+
+Never log:
+
+passwords
+tokens
+secret keys
+
+============================================================
+33. SCALABILITY
+============================================================
+
+Initial architecture:
+
+modular monolith.
+
+Design for horizontal scaling.
+
+Avoid premature microservices.
+
+Potential future infrastructure:
+
+Redis
+SQS
+additional workers
+
+Only introduce these when justified by actual requirements.
+
+============================================================
+34. AWS
+============================================================
+
+Target:
+
+ECS/Fargate
+
+Supporting:
+
+ECR
+ALB
+WAF
+CloudWatch
+Secrets Manager
+CloudFront where useful
+S3 where needed
+
+Use least-privilege IAM.
+
+Do not use long-lived credentials.
+
+============================================================
+35. CI/CD
+============================================================
+
+Pipeline:
+
+lint
+typecheck
+unit
+integration
+security
+build
+container scan
+staging
+smoke tests
+production
+
+============================================================
+36. FRONTEND CONTRACT
+============================================================
+
+The frontend is being implemented separately.
+
+Provide stable contracts for:
+
+authentication
+typing
+results
+analytics
+lessons
+progress
+achievements
+leaderboards
+competition
+profile
+settings
+
+Do not force frontend-specific business logic into backend responses.
+
+============================================================
+37. API DOCUMENTATION
+============================================================
+
+Generate/update:
+
+OpenAPI documentation
+
+Document:
+
+request
+response
+authentication
+authorization
+errors
+pagination
+rate limits where appropriate
+
+============================================================
+38. FINAL BACKEND QA
+============================================================
+
+Run:
+
+lint
+typecheck
+unit tests
+integration tests
+WebSocket tests
+security tests
+production build
+
+Verify:
+
+database migrations
+RLS
+auth
+authorization
+typing validation
+analytics
+achievements
+streaks
+leaderboards
+competition
+health
+
+============================================================
+39. FINAL SECURITY AUDIT
+============================================================
+
+Search for:
+
+hardcoded secrets
+unsafe SQL
+missing authorization
+missing validation
+overly broad RLS
+service-role exposure
+weak rate limits
+unsafe WebSocket events
+sensitive logs
+
+Fix critical/high findings before completion.
+
+============================================================
+40. FINAL REPORT
+============================================================
+
+Report:
+
+implemented modules
+database schema
+migrations
+API endpoints
+WebSocket events
+security controls
+RLS policies
+tests
+performance findings
+deployment requirements
+environment variables
+known limitations
+
+Do not claim incomplete functionality is complete.
+
+============================================================
+END OF BACKEND PHASE
+============================================================

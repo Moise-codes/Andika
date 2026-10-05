@@ -1,0 +1,320 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Profile {
+  id                      String    @id @default(uuid())
+  user_id                 String    @unique // Supabase auth user_id
+  username                String    @unique
+  avatar_url              String?
+  country                 String?
+  timezone                String    @default("UTC")
+  public_profile          Boolean   @default(true)
+  leaderboard_visibility  Boolean   @default(true)
+  country_visibility      Boolean   @default(true)
+  statistics_visibility   Boolean   @default(true)
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+
+  typing_sessions         TypingSession[]
+  lesson_progress         LessonProgress[]
+  practice_sessions       PracticeSession[]
+  achievements            UserAchievement[]
+  streak                  Streak?
+  typing_settings         TypingSettings?
+  competition_participants CompetitionParticipant[]
+
+  @@index([user_id])
+}
+
+model Course {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  language    String   @default("en")
+  order       Int
+  published   Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  modules     Module[]
+
+  @@index([language, published])
+}
+
+model Module {
+  id          String   @id @default(uuid())
+  course_id   String
+  title       String
+  description String?
+  order       Int
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  course      Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+
+  @@index([course_id])
+}
+
+model Lesson {
+  id                String   @id @default(uuid())
+  module_id         String
+  title             String
+  description       String?
+  objectives        String[]
+  instructions       String?
+  order             Int
+  accuracy_requirement Float  @default(0.85)
+  speed_target      Int?     // WPM
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  module            Module            @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  exercises         LessonExercise[]
+  progress          LessonProgress[]
+
+  @@index([module_id])
+}
+
+model LessonExercise {
+  id          String   @id @default(uuid())
+  lesson_id   String
+  text        String
+  order       Int
+  created_at  DateTime @default(now())
+
+  lesson      Lesson   @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+
+  @@index([lesson_id])
+}
+
+model LessonProgress {
+  id            String   @id @default(uuid())
+  profile_id    String
+  lesson_id     String
+  completed     Boolean  @default(false)
+  attempts      Int      @default(0)
+  best_accuracy Float?
+  best_wpm      Int?
+  time_spent    Int      @default(0) // seconds
+  completed_at  DateTime?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  profile       Profile  @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+  lesson        Lesson   @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+
+  @@unique([profile_id, lesson_id])
+  @@index([profile_id])
+  @@index([lesson_id])
+}
+
+model TypingSession {
+  id            String   @id @default(uuid())
+  profile_id    String
+  mode          String   // time, words
+  duration      Int?     // seconds for time mode
+  word_count    Int?     // for word mode
+  content_type  String   // plain, quotes, custom, programming
+  wpm           Float
+  accuracy      Float
+  consistency   Float?
+  correct_chars Int
+  incorrect_chars Int
+  backspaces    Int
+  time_elapsed  Float    // seconds
+  validated     Boolean  @default(false)
+  created_at    DateTime @default(now())
+
+  profile       Profile         @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+  errors        TypingError[]
+  key_metrics   KeyMetric[]
+
+  @@index([profile_id])
+  @@index([created_at])
+}
+
+model TypingError {
+  id              String   @id @default(uuid())
+  session_id      String
+  index           Int
+  expected_char    String
+  actual_char     String
+  created_at      DateTime @default(now())
+
+  session         TypingSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+
+  @@index([session_id])
+}
+
+model KeyMetric {
+  id          String   @id @default(uuid())
+  session_id  String
+  key         String
+  correct     Int      @default(0)
+  incorrect   Int      @default(0)
+  avgTime     Float    @default(0)
+  created_at  DateTime @default(now())
+
+  session     TypingSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+
+  @@index([session_id])
+}
+
+model PracticeSession {
+  id            String   @id @default(uuid())
+  profile_id    String
+  mode          String   // weak_keys, accuracy, speed, words, quotes, etc.
+  duration      Int      // seconds
+  wpm           Float
+  accuracy      Float
+  created_at    DateTime @default(now())
+
+  profile       Profile  @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+  @@index([created_at])
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  category    String   // speed, accuracy, learning, practice, streak, competition
+  icon        String?
+  requirement String   // JSON criteria
+  created_at  DateTime @default(now())
+
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id             String   @id @default(uuid())
+  profile_id     String
+  achievement_id String
+  unlocked_at    DateTime @default(now())
+
+  profile        Profile     @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+  achievement    Achievement @relation(fields: [achievement_id], references: [id], onDelete: Cascade)
+
+  @@unique([profile_id, achievement_id])
+  @@index([profile_id])
+}
+
+model Streak {
+  id              String   @id @default(uuid())
+  profile_id      String   @unique
+  current_streak  Int      @default(0)
+  longest_streak  Int      @default(0)
+  last_practice   DateTime?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  profile         Profile  @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id])
+}
+
+model Competition {
+  id          String   @id @default(uuid())
+  name        String?
+  mode        String   // public, private, challenge
+  duration    Int      // seconds
+  max_players Int
+  status      String   // waiting, started, completed
+  created_by  String?
+  created_at  DateTime @default(now())
+  started_at  DateTime?
+  completed_at DateTime?
+
+  participants CompetitionParticipant[]
+}
+
+model CompetitionParticipant {
+  id            String   @id @default(uuid())
+  competition_id String
+  profile_id    String
+  wpm           Float
+  accuracy      Float
+  position      Int?
+  joined_at     DateTime @default(now())
+  completed_at  DateTime?
+
+  competition   Competition @relation(fields: [competition_id], references: [id], onDelete: Cascade)
+  profile       Profile     @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@unique([competition_id, profile_id])
+  @@index([competition_id])
+}
+
+model TypingContent {
+  id          String   @id @default(uuid())
+  text        String
+  type        String   // plain, quote, programming
+  language    String   @default("en")
+  difficulty  String?  // easy, medium, hard
+  tags        String[]
+  created_at  DateTime @default(now())
+}
+
+model ProgrammingContent {
+  id          String   @id @default(uuid())
+  language    String   // python, java, javascript, typescript, go, sql, html, css
+  code        String
+  difficulty  String?  // easy, medium, hard
+  created_at  DateTime @default(now())
+}
+
+model TypingSettings {
+  id                String   @id @default(uuid())
+  profile_id        String   @unique
+  keyboard_layout   String   @default("qwerty") // qwerty, azerty, qwertz, dvorak, colemak
+  theme             String   @default("forest")
+  sound_enabled     Boolean  @default(true)
+  sound_type        String?  // mechanical, soft, typewriter, minimal
+  sound_volume      Float    @default(0.5)
+  caret_style       String   @default("block") // block, line, underline
+  caret_behavior    String   @default("blink") // blink, static, smooth
+  show_keyboard     Boolean  @default(true)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  profile           Profile  @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  profile_id  String
+  type        String   // achievement, streak, competition
+  title       String
+  message     String
+  read        Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  @@index([profile_id])
+  @@index([read])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  profile_id  String?
+  action      String
+  resource    String
+  details     String?  // JSON
+  ip_address  String?
+  user_agent  String?
+  created_at  DateTime @default(now())
+
+  @@index([profile_id])
+  @@index([created_at])
+}
