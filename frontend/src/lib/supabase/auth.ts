@@ -1,91 +1,78 @@
+'use client';
+
+import type { AuthResponse } from '@supabase/supabase-js';
 import { createClient } from './client';
 
-export async function signInWithGoogle() {
-  const supabase = createClient();
-  
-  const { data, error } = await supabase.auth.signInWithOAuth({
+function redirectUrl(path = '/dashboard'): string {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  return `${origin}/auth/callback?next=${encodeURIComponent(path)}`;
+}
+
+/** Create an email/password account. Supabase emails a 6-digit OTP to confirm it. */
+export function signUpWithEmail(params: {
+  email: string;
+  password: string;
+  fullName: string;
+}): Promise<AuthResponse> {
+  return createClient().auth.signUp({
+    email: params.email,
+    password: params.password,
+    options: {
+      data: { full_name: params.fullName },
+      emailRedirectTo: redirectUrl('/onboarding'),
+    },
+  });
+}
+
+/** Confirm a signup with the 6-digit code from the verification email. */
+export function verifySignupOtp(email: string, token: string): Promise<AuthResponse> {
+  return createClient().auth.verifyOtp({
+    email,
+    token,
+    type: 'signup',
+  });
+}
+
+/** Re-send the signup OTP (subject to Supabase rate limits). */
+export function resendSignupOtp(email: string): Promise<AuthResponse> {
+  return createClient().auth.resend({ type: 'signup', email });
+}
+
+export function signInWithEmail(email: string, password: string): Promise<AuthResponse> {
+  return createClient().auth.signInWithPassword({ email, password });
+}
+
+/**
+ * Start the Google OAuth flow. Supabase automatically links the Google identity
+ * to an existing account that uses the same verified email, and vice versa.
+ */
+export function signInWithGoogle(next = '/dashboard') {
+  return createClient().auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo: redirectUrl(next),
+      queryParams: { prompt: 'select_account' },
     },
   });
-
-  if (error) {
-    console.error('Google OAuth error:', error);
-    throw error;
-  }
-
-  return data;
 }
 
-export async function signInWithEmail(email: string, password: string) {
-  const supabase = createClient();
-  
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+/** Send a password-recovery email that lands on the reset-password screen. */
+export function sendPasswordReset(email: string) {
+  return createClient().auth.resetPasswordForEmail(email, {
+    redirectTo: redirectUrl('/reset-password'),
   });
-
-  if (error) {
-    console.error('Email sign in error:', error);
-    throw error;
-  }
-
-  return data;
 }
 
-export async function signUpWithEmail(email: string, password: string) {
-  const supabase = createClient();
-  
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${window.location.origin}/auth/callback`,
-    },
-  });
-
-  if (error) {
-    console.error('Email sign up error:', error);
-    throw error;
-  }
-
-  return data;
+/** Set a new password for the signed-in user (also used by Google-only accounts). */
+export function updatePassword(password: string) {
+  return createClient().auth.updateUser({ password });
 }
 
-export async function signOut() {
-  const supabase = createClient();
-  
-  const { error } = await supabase.auth.signOut();
-
-  if (error) {
-    console.error('Sign out error:', error);
-    throw error;
-  }
+export function signOut() {
+  return createClient().auth.signOut();
 }
 
-export async function getCurrentUser() {
-  const supabase = createClient();
-  
-  const { data: { user }, error } = await supabase.auth.getUser();
-
-  if (error) {
-    console.error('Get user error:', error);
-    return null;
-  }
-
-  return user;
-}
-
-export async function getSession() {
-  const supabase = createClient();
-  
-  const { data: { session }, error } = await supabase.auth.getSession();
-
-  if (error) {
-    console.error('Get session error:', error);
-    return null;
-  }
-
-  return session;
+export async function getAccessToken(): Promise<string | null> {
+  const { data } = await createClient().auth.getSession();
+  return data.session?.access_token ?? null;
 }

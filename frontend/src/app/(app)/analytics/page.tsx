@@ -5,6 +5,7 @@ import AppNavigation from "@/components/domain/AppNavigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, AreaChart, Area } from 'recharts';
+import { apiGet } from '@/lib/api-client';
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState('30');
@@ -18,33 +19,24 @@ export default function AnalyticsPage() {
 
   const fetchAnalytics = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
       const [overviewRes, performanceRes, weakKeysRes] = await Promise.all([
-        fetch(`${apiUrl}/analytics/overview`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }),
-        fetch(`${apiUrl}/analytics/performance?days=${timeRange}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }),
-        fetch(`${apiUrl}/analytics/weak-keys`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }),
+        apiGet('/analytics/overview'),
+        apiGet(`/analytics/performance?days=${timeRange}`),
+        apiGet('/analytics/weak-keys'),
       ]);
 
-      if (overviewRes.ok) setOverview(await overviewRes.json());
-      if (performanceRes.ok) setPerformance(await performanceRes.json());
-      if (weakKeysRes.ok) setWeakKeys(await weakKeysRes.json());
+      if (overviewRes.ok) {
+        const text = await overviewRes.text();
+        if (text) setOverview(JSON.parse(text));
+      }
+      if (performanceRes.ok) {
+        const text = await performanceRes.text();
+        if (text) setPerformance(JSON.parse(text));
+      }
+      if (weakKeysRes.ok) {
+        const text = await weakKeysRes.text();
+        if (text) setWeakKeys(JSON.parse(text));
+      }
 
       // If unauthorized, redirect to login
       if (overviewRes.status === 401 || performanceRes.status === 401 || weakKeysRes.status === 401) {

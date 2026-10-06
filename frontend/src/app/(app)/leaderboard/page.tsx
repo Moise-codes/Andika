@@ -5,6 +5,7 @@ import AppNavigation from "@/components/domain/AppNavigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trophy, Medal, Crown } from "lucide-react";
+import { apiGet } from '@/lib/api-client';
 
 export default function LeaderboardPage() {
   const [timeRange, setTimeRange] = useState<'global' | 'weekly' | 'monthly' | 'all-time'>('global');
@@ -17,20 +18,12 @@ export default function LeaderboardPage() {
 
   const fetchLeaderboard = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
       let endpoint = '/leaderboards/global';
       if (timeRange === 'weekly') endpoint = '/leaderboards/weekly';
       else if (timeRange === 'monthly') endpoint = '/leaderboards/monthly';
       else if (timeRange === 'all-time') endpoint = '/leaderboards/all-time';
 
-      const res = await fetch(`${apiUrl}${endpoint}?limit=100`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const res = await apiGet(`${endpoint}?limit=100`);
 
       if (res.status === 401) {
         window.location.href = '/login';
@@ -38,26 +31,21 @@ export default function LeaderboardPage() {
       }
 
       if (res.ok) {
-        const data = await res.json();
-        setLeaderboard(data);
+        const text = await res.text();
+        if (text) setLeaderboard(JSON.parse(text));
       }
 
-      // Fetch user's rank
-      const profileRes = await fetch(`${apiUrl}/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      // Fetch user's rank and stats
+      const userStatsRes = await apiGet('/users/me/stats');
 
-      if (profileRes.status === 401) {
+      if (userStatsRes.status === 401) {
         window.location.href = '/login';
         return;
       }
 
-      if (profileRes.ok) {
-        const profile = await profileRes.json();
-        setUserRank(profile);
+      if (userStatsRes.ok) {
+        const text = await userStatsRes.text();
+        if (text) setUserRank(JSON.parse(text));
       }
     } catch (error) {
       console.error('Failed to fetch leaderboard:', error);
@@ -187,20 +175,22 @@ export default function LeaderboardPage() {
           <Card className="mt-8 border-forest-primary">
             <CardHeader>
               <CardTitle>Your Position</CardTitle>
-              <CardDescription>Where you rank on the leaderboard</CardDescription>
+              <CardDescription>Your current typing statistics</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between p-4 bg-ivory-medium rounded-md">
                 <div className="flex items-center gap-4">
-                  <div className="w-8 text-center font-bold text-forest-primary">--</div>
+                  <div className="w-8 text-center font-bold text-forest-primary">
+                    {leaderboard.findIndex((e: any) => e.username === userRank.username) + 1 || '--'}
+                  </div>
                   <div>
                     <div className="font-semibold">{userRank.username}</div>
-                    <div className="text-sm text-text-secondary">{userRank.country || 'Unknown'}</div>
+                    <div className="text-sm text-text-secondary">Your best performance</div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold">-- WPM</div>
-                  <div className="text-sm text-text-secondary">--% accuracy</div>
+                  <div className="font-bold">{Math.round(userRank.current_wpm)} WPM</div>
+                  <div className="text-sm text-text-secondary">{Math.round(userRank.average_accuracy)}% accuracy</div>
                 </div>
               </div>
             </CardContent>

@@ -360,7 +360,7 @@ export default function Home() {
                 style={{ boxShadow: '0 4px 20px -6px rgba(65, 82, 57, 0.3)' }}
               >
                 <Link
-                  href="/practice"
+                  href="/signup"
                   className="flex items-center gap-2 px-6 py-3 text-base font-semibold rounded-lg text-white btn-andika-primary"
                 >
                   Start typing
@@ -479,7 +479,7 @@ export default function Home() {
               href="/signup"
               className="flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold rounded-lg text-white btn-andika-primary w-full"
             >
-              Start for free
+              Get started
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -568,7 +568,7 @@ export default function Home() {
                 href="/signup"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold rounded-lg text-white btn-andika-primary"
               >
-                Start for free
+                Get started
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>

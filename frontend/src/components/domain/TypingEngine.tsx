@@ -3,6 +3,48 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { calculateWPM, calculateAccuracy } from "@/lib/utils";
 
+// Sound effects using Web Audio API
+const playKeystrokeSound = (soundType: string, volume: number) => {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    const normalizedVolume = volume / 100;
+    gainNode.gain.setValueAtTime(normalizedVolume * 0.1, audioContext.currentTime);
+
+    switch (soundType) {
+      case 'mechanical':
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.05);
+        break;
+      case 'soft':
+        oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.03);
+        break;
+      case 'typewriter':
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.04);
+        break;
+      case 'minimal':
+        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+        break;
+      default:
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+    }
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.05);
+  } catch (error) {
+    console.error('Failed to play sound:', error);
+  }
+};
+
 interface TypingEngineProps {
   text: string;
   onComplete?: (result: TypingResult) => void;
@@ -106,6 +148,11 @@ export default function TypingEngine({ text, onComplete, timeLimit, wordLimit, b
     const keyTime = Date.now() - lastKeyPressTime;
     setLastKeyPressTime(Date.now());
 
+    // Play sound if enabled
+    if (soundEnabled) {
+      playKeystrokeSound('mechanical', 50);
+    }
+
     // Track key metrics
     const key = e.key.toLowerCase();
     setKeyMetrics(prev => {
@@ -120,7 +167,7 @@ export default function TypingEngine({ text, onComplete, timeLimit, wordLimit, b
         [key]: { key, correct: newCorrect, incorrect: newIncorrect, avgTime: newAvgTime }
       };
     });
-  }, [currentIndex, text, startTime, isComplete, lastKeyPressTime]);
+  }, [currentIndex, text, startTime, isComplete, lastKeyPressTime, soundEnabled]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (isComplete || instantDeathFailed) return;
@@ -204,8 +251,11 @@ export default function TypingEngine({ text, onComplete, timeLimit, wordLimit, b
       </div>
 
       {/* Text Display */}
-      <div className="bg-ivory-medium rounded-lg p-6 mb-6 border border-border">
-        <div className="font-mono text-xl leading-relaxed">
+      <div
+        className="bg-ivory-medium rounded-lg p-6 mb-6 border border-border cursor-pointer relative overflow-hidden"
+        onClick={() => inputRef.current?.focus()}
+      >
+        <div className="font-mono text-xl leading-relaxed break-words">
           {text.split("").map((char, index) => {
             let charClass = "text-text-primary";
 
@@ -243,7 +293,9 @@ export default function TypingEngine({ text, onComplete, timeLimit, wordLimit, b
         {isComplete ? (
           <p className="text-forest-primary font-semibold">Test complete! Scroll down to see results.</p>
         ) : (
-          <p>Click here and start typing...</p>
+          <p className="cursor-pointer hover:text-forest-primary transition-colors" onClick={() => inputRef.current?.focus()}>
+            Click the text above and start typing...
+          </p>
         )}
       </div>
     </div>

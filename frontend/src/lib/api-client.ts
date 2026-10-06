@@ -1,60 +1,67 @@
-// API client with test mode support for MVP testing
-// When test mode is enabled, it bypasses authentication requirements
+'use client';
 
-const TEST_MODE_KEY = 'andika_test_mode';
+import { createClient, isSupabaseConfigured } from './supabase/client';
 
-export function isTestMode(): boolean {
-  if (typeof window === 'undefined') return false;
-  return localStorage.getItem(TEST_MODE_KEY) === 'true';
+const API_PREFIX = '/api/v1';
+
+/** Backend origin, e.g. http://localhost:3001 (no trailing slash, no /api/v1). */
+export function getApiOrigin(): string {
+  const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  return base.replace(/\/+$/, '').replace(/\/api\/v1$/, '');
 }
 
-export function getAuthToken(): string | null {
-  if (isTestMode()) {
-    // Return a fake token for test mode
-    return 'test-mode-token';
+/** Full backend API base, e.g. http://localhost:3001/api/v1 */
+export function getApiBaseUrl(): string {
+  return `${getApiOrigin()}${API_PREFIX}`;
+}
+
+/** Current Supabase access token, used as the backend bearer token. */
+export async function getAuthToken(): Promise<string | null> {
+  if (!isSupabaseConfigured()) return null;
+  const { data } = await createClient().auth.getSession();
+  return data.session?.access_token ?? null;
+}
+
+export async function apiFetch(
+  path: string,
+  options: RequestInit = {},
+): Promise<Response> {
+  const token = await getAuthToken();
+  const headers = new Headers(options.headers);
+
+  if (options.body && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
   }
-  return localStorage.getItem('access_token');
-}
-
-export async function apiFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  const token = getAuthToken();
-  
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
-
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(url, {
+  const url = path.startsWith('http') ? path : `${getApiBaseUrl()}${path}`;
+
+  return fetch(url, {
     ...options,
     headers,
   });
-
-  return response;
 }
 
-// Convenience methods
-export async function apiGet(url: string): Promise<Response> {
-  return apiFetch(url, { method: 'GET' });
+export function apiGet(path: string): Promise<Response> {
+  return apiFetch(path, { method: 'GET' });
 }
 
-export async function apiPost(url: string, data: any): Promise<Response> {
-  return apiFetch(url, {
+export function apiPost(path: string, data?: unknown): Promise<Response> {
+  return apiFetch(path, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: data === undefined ? undefined : JSON.stringify(data),
   });
 }
 
-export async function apiPut(url: string, data: any): Promise<Response> {
-  return apiFetch(url, {
-    method: 'PUT',
-    body: JSON.stringify(data),
+export function apiPatch(path: string, data?: unknown): Promise<Response> {
+  return apiFetch(path, {
+    method: 'PATCH',
+    body: data === undefined ? undefined : JSON.stringify(data),
   });
 }
 
-export async function apiDelete(url: string): Promise<Response> {
-  return apiFetch(url, { method: 'DELETE' });
+export function apiDelete(path: string): Promise<Response> {
+  return apiFetch(path, { method: 'DELETE' });
 }

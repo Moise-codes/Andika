@@ -1,77 +1,93 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class EmailService {
-  private transporter: nodemailer.Transporter;
+  private readonly logger = new Logger(EmailService.name);
+  private readonly transporter: nodemailer.Transporter | null;
+  private readonly from: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(private readonly configService: ConfigService) {
+    const host = this.configService.get<string>('SMTP_HOST');
+    const user = this.configService.get<string>('SMTP_USER');
+    const pass = this.configService.get<string>('SMTP_PASSWORD');
+    const port = Number(this.configService.get<string>('SMTP_PORT') ?? 587);
+
+    this.from = this.configService.get<string>('SMTP_FROM') ?? 'noreply@andika.com';
+
+    if (!host || !user || !pass) {
+      this.logger.warn(
+        'SMTP is not configured (SMTP_HOST / SMTP_USER / SMTP_PASSWORD). Transactional emails will be skipped.',
+      );
+      this.transporter = null;
+      return;
+    }
+
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get('SMTP_HOST') || 'smtp.gmail.com',
-      port: this.configService.get('SMTP_PORT') || 587,
-      secure: false,
-      auth: {
-        user: this.configService.get('SMTP_USER'),
-        pass: this.configService.get('SMTP_PASSWORD'),
-      },
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass },
     });
   }
 
-  async sendVerificationEmail(email: string, token: string) {
-    const verificationUrl = `${this.configService.get('FRONTEND_URL') || 'http://localhost:3000'}/verify?token=${token}`;
-
-    const mailOptions = {
-      from: this.configService.get('SMTP_FROM') || 'noreply@andika.com',
-      to: email,
-      subject: 'Verify your ANDIKA account',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #415239;">Welcome to ANDIKA!</h2>
-          <p>Thank you for signing up. Please verify your email address by clicking the button below:</p>
-          <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #415239; color: white; text-decoration: none; border-radius: 4px; margin: 16px 0;">Verify Email</a>
-          <p>Or copy and paste this link into your browser:</p>
-          <p style="word-break: break-all; color: #666;">${verificationUrl}</p>
-          <p style="color: #666; font-size: 12px;">This link will expire in 24 hours.</p>
-        </div>
-      `,
-    };
+  private async send(to: string, subject: string, html: string) {
+    if (!this.transporter) {
+      this.logger.warn(`Skipped "${subject}" to ${to}: SMTP is not configured.`);
+      return { success: false, error: 'SMTP not configured' };
+    }
 
     try {
-      await this.transporter.sendMail(mailOptions);
+      await this.transporter.sendMail({ from: this.from, to, subject, html });
       return { success: true };
     } catch (error: any) {
-      console.error('Failed to send verification email:', error);
-      return { success: false, error: error?.message || 'Unknown error' };
+      this.logger.error(`Failed to send "${subject}" to ${to}: ${error?.message}`);
+      return { success: false, error: error?.message ?? 'Unknown error' };
     }
   }
 
-  async sendPasswordResetEmail(email: string, token: string) {
-    const resetUrl = `${this.configService.get('FRONTEND_URL') || 'http://localhost:3000'}/reset-password?token=${token}`;
+  /** Sent once, when a new account's profile is created. */
+  async sendWelcomeEmail(email: string, name: string) {
+    const dashboardUrl =
+      this.configService.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
 
-    const mailOptions = {
-      from: this.configService.get('SMTP_FROM') || 'noreply@andika.com',
-      to: email,
-      subject: 'Reset your ANDIKA password',
-      html: `
+    return this.send(
+      email,
+      'Welcome to ANDIKA',
+      `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #415239;">Reset Your Password</h2>
-          <p>You requested a password reset. Click the button below to reset your password:</p>
-          <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #415239; color: white; text-decoration: none; border-radius: 4px; margin: 16px 0;">Reset Password</a>
-          <p>Or copy and paste this link into your browser:</p>
-          <p style="word-break: break-all; color: #666;">${resetUrl}</p>
-          <p style="color: #666; font-size: 12px;">This link will expire in 1 hour.</p>
-          <p style="color: #666; font-size: 12px;">If you didn't request this, please ignore this email.</p>
+          <h2 style="color: #415239;">Welcome to ANDIKA, ${name}!</h2>
+          <p>Your account is ready. Start improving your typing speed and accuracy today.</p>
+          <a href="${dashboardUrl}/dashboard"
+             style="display: inline-block; padding: 12px 24px; background-color: #415239; color: #ffffff; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+            Go to your dashboard
+          </a>
+          <p style="color: #666; font-size: 12px;">You are receiving this because an ANDIKA account was created with this address.</p>
         </div>
       `,
-    };
+    );
+  }
 
-    try {
-      await this.transporter.sendMail(mailOptions);
-      return { success: true };
-    } catch (error: any) {
-      console.error('Failed to send password reset email:', error);
-      return { success: false, error: error?.message || 'Unknown error' };
-    }
+  async sendPasswordResetEmail(email: string, token: string) {
+    const resetUrl = `${
+      this.configService.get<string>('FRONTEND_URL') ?? 'http://localhost:3000'
+    }/reset-password?token=${token}`;
+
+    return this.send(
+      email,
+      'Reset your ANDIKA password',
+      `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #415239;">Reset your password</h2>
+          <p>Click the button below to choose a new password. This link expires in 1 hour.</p>
+          <a href="${resetUrl}"
+             style="display: inline-block; padding: 12px 24px; background-color: #415239; color: #ffffff; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+            Reset password
+          </a>
+          <p style="color: #666; font-size: 12px;">If you didn't request this, you can safely ignore this email.</p>
+        </div>
+      `,
+    );
   }
 }

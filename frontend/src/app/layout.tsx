@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Playpen_Sans } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
-import Script from "next/script";
-import { TestModeLoader } from "@/components/test-mode-loader";
 
 const playpenSans = Playpen_Sans({
   variable: "--font-playpen-sans",
@@ -25,17 +23,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       className={`${playpenSans.variable} h-full antialiased`}
     >
-      <head>
-        <Script
-          src="https://accounts.google.com/gsi/client"
-          strategy="afterInteractive"
-        />
-      </head>
       <body className="min-h-full flex flex-col">
-        <TestModeLoader />
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );

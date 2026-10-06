@@ -1,14 +1,25 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+'use client';
 
-// Client-side Supabase client
-export const createClient = () => {
-  return createClientComponentClient();
-};
+import { createBrowserClient } from '@supabase/ssr';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-// Server-side Supabase client
-export const createServerClient = () => {
-  const cookieStore = cookies();
-  return createServerComponentClient({ cookies: () => cookieStore });
-};
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+export function isSupabaseConfigured(): boolean {
+  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+}
+
+/**
+ * Browser-side Supabase client. `createBrowserClient` is a singleton, so calling
+ * this repeatedly is safe and keeps one session in memory.
+ */
+export function createClient(): SupabaseClient {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error(
+      'Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.',
+    );
+  }
+
+  return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}

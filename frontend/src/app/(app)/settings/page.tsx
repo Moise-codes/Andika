@@ -4,6 +4,26 @@ import { useState, useEffect } from 'react';
 import AppNavigation from "@/components/domain/AppNavigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { apiGet, apiPatch } from '@/lib/api-client';
+import { signOut } from '@/lib/supabase/auth';
+
+const TYPING_KEYS = [
+  'theme',
+  'keyboard_layout',
+  'caret_style',
+  'caret_behavior',
+  'show_keyboard',
+  'sound_enabled',
+  'sound_type',
+  'sound_volume',
+] as const;
+
+const PROFILE_KEYS = [
+  'public_profile',
+  'leaderboard_visibility',
+  'country_visibility',
+  'statistics_visibility',
+] as const;
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -16,20 +36,18 @@ export default function SettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const [profileRes, settingsRes] = await Promise.all([
+        apiGet('/users/me'),
+        apiGet('/users/me/settings'),
+      ]);
 
-      const res = await fetch(`${apiUrl}/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (res.ok) {
-        const profile = await res.json();
-        setSettings(profile.typing_settings || {});
-      } else if (res.status === 401) {
+      if (profileRes.ok && settingsRes.ok) {
+        const profileText = await profileRes.text();
+        const settingsText = await settingsRes.text();
+        const profile = profileText ? JSON.parse(profileText) : {};
+        const settings = settingsText ? JSON.parse(settingsText) : {};
+        setSettings({ ...profile, ...settings });
+      } else if (profileRes.status === 401 || settingsRes.status === 401) {
         window.location.href = '/login';
       }
     } catch (error) {
@@ -42,23 +60,30 @@ export default function SettingsPage() {
     setSaveMessage(null);
 
     try {
-      const token = localStorage.getItem('access_token');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const typingUpdate: Record<string, unknown> = {};
+      const profileUpdate: Record<string, unknown> = {};
 
-      const res = await fetch(`${apiUrl}/users/me`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          typing_settings: settings,
-        }),
+      TYPING_KEYS.forEach((key) => {
+        if (settings?.[key] !== undefined) typingUpdate[key] = settings[key];
+      });
+      PROFILE_KEYS.forEach((key) => {
+        if (settings?.[key] !== undefined) profileUpdate[key] = settings[key];
       });
 
-      if (res.ok) {
+      const [typingRes, profileRes] = await Promise.all([
+        Object.keys(typingUpdate).length
+          ? apiPatch('/users/me/settings', typingUpdate)
+          : Promise.resolve({ ok: true } as Response),
+        Object.keys(profileUpdate).length
+          ? apiPatch('/users/me', profileUpdate)
+          : Promise.resolve({ ok: true } as Response),
+      ]);
+
+      if (typingRes.ok && profileRes.ok) {
         setSaveMessage('Settings saved successfully!');
-      } else if (res.status === 401) {
+        // Clear message after 3 seconds
+        setTimeout(() => setSaveMessage(null), 3000);
+      } else if (typingRes.status === 401 || profileRes.status === 401) {
         window.location.href = '/login';
       } else {
         setSaveMessage('Failed to save settings');
@@ -294,11 +319,8 @@ export default function SettingsPage() {
           <CardContent>
             <div className="space-y-4">
               <Button
-                onClick={() => {
-                  document.cookie = 'access_token=; path=/; max-age=0';
-                  document.cookie = 'refresh_token=; path=/; max-age=0';
-                  localStorage.removeItem('access_token');
-                  localStorage.removeItem('refresh_token');
+                onClick={async () => {
+                  await signOut();
                   window.location.href = '/login';
                 }}
                 variant="destructive"
@@ -309,6 +331,16 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        <div className="flex justify-end">
+          <Button
+            onClick={saveSettings}
+            disabled={isLoading}
+            className="btn-andika-primary"
+          >
+            {isLoading ? 'Saving...' : 'Save All Settings'}
+          </Button>
+        </div>
       </main>
     </div>
   );

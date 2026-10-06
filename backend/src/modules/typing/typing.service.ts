@@ -10,6 +10,17 @@ export class TypingService {
       where: { user_id: userId },
     });
 
+    // Validate result (server-side validation)
+    const validatedWPM = this.validateWPM(createDto);
+    const validatedAccuracy = this.validateAccuracy(createDto);
+
+    // Map error fields from frontend format to database format
+    const errorData = createDto.errors?.map((err: any) => ({
+      index: err.index,
+      expected_char: err.expected,
+      actual_char: err.actual,
+    })) || [];
+
     return this.prisma.typingSession.create({
       data: {
         profile_id: profile.id,
@@ -17,12 +28,19 @@ export class TypingService {
         duration: createDto.duration,
         word_count: createDto.wordCount,
         content_type: createDto.contentType,
-        wpm: 0,
-        accuracy: 0,
-        correct_chars: 0,
-        incorrect_chars: 0,
-        backspaces: 0,
-        time_elapsed: 0,
+        wpm: validatedWPM || createDto.wpm || 0,
+        accuracy: validatedAccuracy || createDto.accuracy || 0,
+        correct_chars: createDto.correctChars || 0,
+        incorrect_chars: createDto.incorrectChars || 0,
+        backspaces: createDto.backspaces || 0,
+        time_elapsed: createDto.timeElapsed || 0,
+        validated: true,
+        errors: errorData.length > 0 ? {
+          create: errorData,
+        } : undefined,
+        key_metrics: createDto.keyMetrics ? {
+          create: createDto.keyMetrics,
+        } : undefined,
       },
     });
   }

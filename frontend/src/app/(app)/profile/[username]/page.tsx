@@ -1,54 +1,43 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import AppNavigation from "@/components/domain/AppNavigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Trophy, Target, TrendingUp } from "lucide-react";
+import { apiGet } from '@/lib/api-client';
 
-export default function ProfilePage({ params }: { params: { username: string } }) {
+export default function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
+  const resolvedParams = use(params);
   const [profile, setProfile] = useState<any>(null);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [recentSessions, setRecentSessions] = useState<any[]>([]);
 
   useEffect(() => {
     fetchProfile();
-  }, [params.username]);
+  }, [resolvedParams.username]);
 
   const fetchProfile = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-      const [profileRes, achievementsRes, sessionsRes] = await Promise.all([
-        fetch(`${apiUrl}/users/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }),
-        fetch(`${apiUrl}/achievements/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }),
-        fetch(`${apiUrl}/typing/sessions/recent`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }),
+      const username = resolvedParams.username;
+      const [profileRes, sessionsRes] = await Promise.all([
+        apiGet(`/users/${username}`),
+        apiGet(`/typing/sessions?limit=10`),
       ]);
 
-      if (profileRes.status === 401 || achievementsRes.status === 401 || sessionsRes.status === 401) {
+      if (profileRes.status === 401 || sessionsRes.status === 401) {
         window.location.href = '/login';
         return;
       }
 
-      if (profileRes.ok) setProfile(await profileRes.json());
-      if (achievementsRes.ok) setAchievements(await achievementsRes.json());
-      if (sessionsRes.ok) setRecentSessions(await sessionsRes.json());
+      if (profileRes.ok) {
+        const text = await profileRes.text();
+        if (text) setProfile(JSON.parse(text));
+      }
+      if (sessionsRes.ok) {
+        const text = await sessionsRes.text();
+        if (text) setRecentSessions(JSON.parse(text));
+      }
     } catch (error) {
       console.error('Failed to fetch profile:', error);
     }
@@ -60,7 +49,7 @@ export default function ProfilePage({ params }: { params: { username: string } }
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-forest-primary mb-2">{profile?.username || params.username}</h1>
+          <h1 className="text-3xl font-bold text-forest-primary mb-2">{profile?.username || resolvedParams.username}</h1>
           <p className="text-text-secondary">Typing enthusiast</p>
         </div>
 
@@ -71,7 +60,9 @@ export default function ProfilePage({ params }: { params: { username: string } }
               <CardTitle className="text-sm font-medium text-text-secondary">Best WPM</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-forest-primary">{profile?.typing_sessions?.[0]?.wpm || '--'}</div>
+              <div className="text-3xl font-bold text-forest-primary">
+                {recentSessions.length > 0 ? Math.round(Math.max(...recentSessions.map((s: any) => s.wpm))) : '--'}
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -80,8 +71,8 @@ export default function ProfilePage({ params }: { params: { username: string } }
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-forest-primary">
-                {profile?.typing_sessions?.length > 0
-                  ? Math.round(profile.typing_sessions.reduce((sum: number, s: any) => sum + s.wpm, 0) / profile.typing_sessions.length)
+                {recentSessions.length > 0
+                  ? Math.round(recentSessions.reduce((sum: number, s: any) => sum + s.wpm, 0) / recentSessions.length)
                   : '--'}
               </div>
             </CardContent>
@@ -91,15 +82,19 @@ export default function ProfilePage({ params }: { params: { username: string } }
               <CardTitle className="text-sm font-medium text-text-secondary">Tests Taken</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-forest-primary">{profile?.typing_sessions?.length || 0}</div>
+              <div className="text-3xl font-bold text-forest-primary">{recentSessions.length || 0}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-text-secondary">Current Streak</CardTitle>
+              <CardTitle className="text-sm font-medium text-text-secondary">Accuracy</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-forest-primary">{profile?.streak?.current_streak || 0} days</div>
+              <div className="text-3xl font-bold text-forest-primary">
+                {recentSessions.length > 0
+                  ? Math.round(recentSessions.reduce((sum: number, s: any) => sum + s.accuracy, 0) / recentSessions.length)
+                  : '--'}%
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -109,22 +104,31 @@ export default function ProfilePage({ params }: { params: { username: string } }
           <CardHeader>
             <Trophy className="h-6 w-6 text-forest-primary mb-2" />
             <CardTitle>Achievements</CardTitle>
-            <CardDescription>Recent achievements unlocked</CardDescription>
+            <CardDescription>Milestones reached</CardDescription>
           </CardHeader>
           <CardContent>
-            {achievements.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {achievements.slice(0, 4).map((achievement: any) => (
-                  <div key={achievement.id} className="text-center p-4 bg-ivory-medium rounded-md">
-                    <div className="text-2xl mb-2">{achievement.icon || '�'}</div>
-                    <div className="font-semibold text-sm">{achievement.name}</div>
-                    <div className="text-xs text-text-secondary">{achievement.description}</div>
-                  </div>
-                ))}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-ivory-medium rounded-md">
+                <div className="text-2xl mb-2">🎯</div>
+                <div className="font-semibold text-sm">First Test</div>
+                <div className="text-xs text-text-secondary">Completed your first typing test</div>
               </div>
-            ) : (
-              <p className="text-text-secondary text-center py-8">No achievements unlocked yet.</p>
-            )}
+              <div className="text-center p-4 bg-ivory-medium rounded-md opacity-50">
+                <div className="text-2xl mb-2">⚡</div>
+                <div className="font-semibold text-sm">Speed Demon</div>
+                <div className="text-xs text-text-secondary">Reach 60 WPM</div>
+              </div>
+              <div className="text-center p-4 bg-ivory-medium rounded-md opacity-50">
+                <div className="text-2xl mb-2">🔥</div>
+                <div className="font-semibold text-sm">On Fire</div>
+                <div className="text-xs text-text-secondary">7 day streak</div>
+              </div>
+              <div className="text-center p-4 bg-ivory-medium rounded-md opacity-50">
+                <div className="text-2xl mb-2">💯</div>
+                <div className="font-semibold text-sm">Perfectionist</div>
+                <div className="text-xs text-text-secondary">100% accuracy test</div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

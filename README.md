@@ -1,326 +1,144 @@
-# ANDIKA - Learn. Practice. Master Typing.
+# ANDIKA — Learn. Practice. Master Typing.
 
-A modern typing-learning and typing-performance platform built with Next.js, NestJS, and Supabase.
+A modern typing-learning and typing-performance platform with a Next.js frontend
+and a NestJS API. Authentication (email/password **and** Google) and the database
+are provided by a **single Supabase project**.
 
 ## Tech Stack
 
 ### Frontend
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui
-- **Icons**: Lucide React
-- **Animations**: Framer Motion
-- **Charts**: Recharts
-- **Auth**: Supabase Auth
+- **Framework:** Next.js 16 (App Router, Turbopack)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS, shadcn/ui-style components
+- **Icons:** Lucide / Phosphor
+- **Charts:** Recharts
+- **Auth:** Supabase Auth via `@supabase/ssr` (cookie-based sessions)
 
 ### Backend
-- **Framework**: NestJS
-- **Language**: TypeScript
-- **ORM**: Prisma
-- **Database**: Supabase PostgreSQL
-- **Auth**: Supabase Auth + JWT
-- **API**: REST
-- **Real-time**: WebSockets (Socket.IO)
+- **Framework:** NestJS 10
+- **Language:** TypeScript
+- **ORM:** Prisma
+- **Database:** Supabase Postgres (single source of truth)
+- **Auth:** Supabase-issued access tokens, validated per request
+- **API:** REST + Swagger, Socket.IO for competitions
 
-## Project Structure
+## Architecture
+
+One Supabase project serves as both the database and the identity provider:
 
 ```
-Andika/
-├── frontend/                 # Next.js frontend application
-│   ├── src/
-│   │   ├── app/             # App Router pages
-│   │   │   ├── (marketing)/ # Landing page
-│   │   │   ├── (auth)/      # Login/Signup
-│   │   │   └── (app)/       # Application pages
-│   │   ├── components/
-│   │   │   ├── ui/          # shadcn/ui components
-│   │   │   └── domain/      # Domain-specific components
-│   │   └── lib/             # Utilities
-│   └── package.json
-├── backend/                  # NestJS backend application
-│   ├── src/
-│   │   ├── modules/         # Feature modules
-│   │   │   ├── auth/
-│   │   │   ├── users/
-│   │   │   ├── typing/
-│   │   │   └── analytics/
-│   │   ├── common/          # Shared utilities
-│   │   │   ├── guards/
-│   │   │   ├── decorators/
-│   │   │   └── prisma/
-│   │   ├── main.ts
-│   │   └── app.module.ts
-│   ├── prisma/
-│   │   └── schema.prisma    # Database schema
-│   └── package.json
-└── docs/                     # Documentation
-    └── ARCHITECTURE-SUMMARY.md
+Browser ──(Supabase JS / cookies)──► Supabase Auth ──► Postgres (same project)
+   │                                                      ▲
+   └──(Bearer access token)──► NestJS API ──(Prisma)──────┘
 ```
+
+- The browser signs users in with Supabase and stores the session in cookies.
+- Every API call sends the Supabase access token; the NestJS guard verifies it
+  and attaches the user to the request.
+- The backend owns application data (profiles, sessions, analytics) via Prisma.
+
+See [`docs/AUTH-SETUP.md`](docs/AUTH-SETUP.md) for the full auth/DB setup and the
+signup-OTP, Google, and account-linking flows.
 
 ## Getting Started
 
 ### Prerequisites
-
 - Node.js 18+
-- npm or yarn
-- Supabase account
+- A Supabase project (free tier is fine)
 
-### Backend Setup
+### Step 1 — Environment variables
 
-1. Navigate to the backend directory:
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
+```
+
+Fill in your Supabase connection strings and API keys (see
+[`docs/AUTH-SETUP.md`](docs/AUTH-SETUP.md)). Enable Google in the Supabase
+dashboard and — for production — configure SMTP there too.
+
+### Step 2 — Backend
+
 ```bash
 cd backend
-```
-
-2. Install dependencies:
-```bash
 npm install
-```
-
-3. Set up environment variables:
-```bash
-cp .env.example .env
-```
-
-Edit `.env` with your Supabase credentials:
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/andika"
-SUPABASE_URL="your-supabase-project-url"
-SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
-JWT_SECRET="your-jwt-secret-key"
-PORT=3001
-FRONTEND_URL="http://localhost:3000"
-```
-
-4. Configure Google OAuth in Supabase:
-   - Go to your Supabase project dashboard
-   - Navigate to Authentication > Providers > Google
-   - Enable Google provider
-   - Add your Google OAuth client ID and secret
-   - Set redirect URL: `http://localhost:3000/auth/callback` (development)
-   - Set redirect URL: `https://yourdomain.com/auth/callback` (production)
-
-5. Generate Prisma client:
-```bash
 npx prisma generate
+npx prisma migrate deploy      # or: npx prisma migrate dev
+npm run start:dev              # http://localhost:3001  (docs at /api/docs)
 ```
 
-6. Run database migrations:
-```bash
-npx prisma migrate dev
-```
+### Step 3 — Frontend
 
-7. Start the backend server:
-```bash
-npm run start:dev
-```
-
-The backend will run on `http://localhost:3001`
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
 ```bash
 cd frontend
-```
-
-2. Install dependencies:
-```bash
 npm install
+npm run dev                    # http://localhost:3000
 ```
 
-3. Set up environment variables:
-Create `.env.local` (this file is gitignored):
-```env
-NEXT_PUBLIC_SUPABASE_URL="your-supabase-project-url"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
-NEXT_PUBLIC_API_URL="http://localhost:3001"
-```
+### Docker
 
-4. Start the frontend development server:
+With `backend/.env` and `frontend/.env.local` in place:
+
 ```bash
-npm run dev
+docker compose up --build
 ```
 
-The frontend will run on `http://localhost:3000`
+The database stays on Supabase, so there is no local Postgres container.
 
-6. Start the backend server:
-```bash
-npm run start:dev
-```
+## Features
 
-The backend will run on `http://localhost:3001`
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-```bash
-cd frontend
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Set up environment variables:
-Create `.env.local` (this file is gitignored):
-```env
-NEXT_PUBLIC_SUPABASE_URL="your-supabase-project-url"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
-NEXT_PUBLIC_API_URL="http://localhost:3001"
-```
-
-4. Start the frontend development server:
-```bash
-npm run dev
-```
-
-The frontend will run on `http://localhost:3000`
-
-## Features Implemented
-
-### Phase 1: Documentation ✅
-- Product Requirements Document
-- Functional Requirements Document
-- Non-functional Requirements Document
-- User Personas
-- User Journeys
-- Architecture Summary
-
-### Phase 2A: Frontend (In Progress)
-- ✅ Next.js project setup
-- ✅ Brand colors and design system
-- ✅ Landing page
-- ✅ Authentication UI (login/signup)
-- ✅ Application navigation
-- ✅ Dashboard
-- ✅ Typing engine component
-- ✅ Typing test UI
-- ✅ Results analysis
-- ✅ Analytics dashboard
-- ✅ Learning UI (courses)
-- ✅ Practice UI
-- ✅ Programming typing UI
-
-### Phase 2B: Backend (In Progress)
-- ✅ NestJS project setup
-- ✅ Prisma schema
-- ✅ Auth module (Supabase integration)
-- ✅ Users module
-- ✅ Typing module with validation
-- ✅ Analytics module
-- ✅ Health check endpoint
+- Multiple typing modes (time, words, quotes, programming)
+- Real-time WPM / accuracy / consistency analytics and weak-key analysis
+- Structured courses & lessons with progress tracking
+- Achievements, streaks, and global leaderboards
+- Real-time competitions over WebSockets
+- Account management: email/password, Google, password reset, profile & settings
 
 ## API Endpoints
 
+Base URL: `http://localhost:3001/api/v1`
+
 ### Health
-- `GET /api/v1/health` - Health check
-- `GET /api/v1/health/live` - Liveness probe
-- `GET /api/v1/health/ready` - Readiness probe
+- `GET /health`, `GET /health/live`, `GET /health/ready`
 
 ### Auth
-- `POST /api/v1/auth/login` - Login
-- `POST /api/v1/auth/refresh` - Refresh token
-- `GET /api/v1/auth/me` - Get current user
-- `POST /api/v1/auth/logout` - Logout
+- `GET  /auth/me` — current profile (creates it on first call) · Bearer
+- `POST /auth/sync` — bootstrap profile after sign-in · Bearer
+- `GET  /auth/email-status?email=` — provider lookup for signup guidance · public
+- `POST /auth/password` — set/change password · Bearer
 
 ### Users
-- `GET /api/v1/users/me` - Get profile
-- `PATCH /api/v1/users/me` - Update profile
+- `GET  /users/me`, `PATCH /users/me`
+- `GET  /users/me/settings`, `PATCH /users/me/settings`
 
-### Typing
-- `POST /api/v1/typing/sessions` - Create typing session
-- `GET /api/v1/typing/sessions` - Get sessions
-- `POST /api/v1/typing/sessions/:id/complete` - Complete session
-- `GET /api/v1/typing/results/:id` - Get result
-- `GET /api/v1/typing/results/:id/analysis` - Get result analysis
+### Typing / Analytics / Learning / Social
+- `POST /typing/sessions`, `GET /typing/sessions`, `GET /typing/sessions/recent`, `GET /typing/results/:id`
+- `GET  /analytics/overview`, `GET /analytics/performance`, `GET /analytics/weak-keys`
+- `/courses`, `/lessons`, `/practice`, `/content`
+- `/achievements`, `/streaks`, `/leaderboards`
+- WebSocket: competitions
 
-### Analytics
-- `GET /api/v1/analytics/overview` - Get overview stats
-- `GET /api/v1/analytics/performance` - Get performance data
-- `GET /api/v1/analytics/weak-keys` - Get weak keys analysis
+All routes except health and `auth/email-status` require
+`Authorization: Bearer <supabase-access-token>`.
 
 ## Database Schema
 
-The database includes the following main entities:
-- Profile (user profiles)
-- Course, Module, Lesson (learning content)
-- TypingSession, TypingError, KeyMetric (typing data)
-- PracticeSession (practice data)
-- Achievement, UserAchievement (achievements)
-- Streak (streak tracking)
-- Competition, CompetitionParticipant (competitions)
-- TypingContent, ProgrammingContent (content library)
-- TypingSettings (user preferences)
-
-See `backend/prisma/schema.prisma` for the full schema.
+Main entities (see `backend/prisma/schema.prisma`): `Profile`, `TypingSettings`,
+`Streak`, `TypingSession`/`TypingError`/`KeyMetric`, `PracticeSession`,
+`Course`/`Module`/`Lesson`/`LessonProgress`, `Achievement`/`UserAchievement`,
+`Competition`/`CompetitionParticipant`, `TypingContent`, `ProgrammingContent`,
+`Notification`, `AuditLog`.
 
 ## Development
 
-### Running Tests
-
-Backend:
 ```bash
-cd backend
-npm run test
+# Backend
+cd backend && npm run lint && npm run test && npm run build
+
+# Frontend
+cd frontend && npm run lint && npm run build
 ```
-
-### Building for Production
-
-Frontend:
-```bash
-cd frontend
-npm run build
-npm run start
-```
-
-Backend:
-```bash
-cd backend
-npm run build
-npm run start:prod
-```
-
-## Architecture Decisions
-
-- **Typing Engine**: Client-side only for real-time performance, server validates results
-- **WPM Calculation**: characters / 5 / minutes
-- **Session Management**: Supabase handles auth, NestJS validates with JWT
-- **RLS**: Row Level Security on all user data (to be implemented)
-- **WebSockets**: For competitions only (to be implemented)
-- **ORM**: Prisma selected over Drizzle
-
-## Future Work
-
-### Frontend
-- Theme system (Ivory, Midnight themes)
-- Keyboard layout support (AZERTY, QWERTZ, Dvorak, Colemak)
-- Achievements and streaks UI
-- Leaderboards UI
-- Competition UI with WebSockets
-- Profile page
-- Settings page
-- Accessibility features
-
-### Backend
-- Row Level Security policies
-- Courses and Lessons modules
-- Practice module
-- Achievements module
-- Streaks module
-- Leaderboard module
-- Competition WebSocket module
-- Content module
-- Security (rate limiting, validation)
-- Docker configuration
 
 ## License
 
-Proprietary - All rights reserved
-
-## Support
-
-For questions or issues, please refer to the documentation in the `docs/` directory.
-# Andika
+Proprietary — All rights reserved.

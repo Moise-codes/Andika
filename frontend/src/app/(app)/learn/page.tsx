@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppNavigation from "@/components/domain/AppNavigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, CheckCircle, Lock, Play, Star, Clock, Target } from "lucide-react";
 import Link from "next/link";
+import { apiGet } from '@/lib/api-client';
 
 const LESSONS = [
   {
@@ -94,6 +95,28 @@ const LESSONS = [
 
 export default function LearnPage() {
   const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
+  const [userStats, setUserStats] = useState<any>(null);
+
+  useEffect(() => {
+    fetchUserStats();
+  }, []);
+
+  const fetchUserStats = async () => {
+    try {
+      const res = await apiGet('/users/me/stats');
+      if (res.ok) {
+        const text = await res.text();
+        if (text) {
+          const stats = JSON.parse(text);
+          setUserStats(stats);
+        }
+      } else if (res.status === 401) {
+        window.location.href = '/login';
+      }
+    } catch (error) {
+      console.error('Failed to fetch user stats:', error);
+    }
+  };
 
   if (selectedCourse) {
     const course = LESSONS.find(c => c.id === selectedCourse);
@@ -178,11 +201,15 @@ export default function LearnPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold mb-2">Your Progress</h2>
-                <p className="text-ivory-light/80">2 of 6 courses completed</p>
+                <p className="text-ivory-light/80">
+                  {userStats ? `${Math.round(userStats.average_wpm)} WPM average` : 'Start typing to track progress'}
+                </p>
               </div>
               <div className="text-right">
-                <div className="text-4xl font-bold">33%</div>
-                <div className="text-sm text-ivory-light/80">Complete</div>
+                <div className="text-4xl font-bold">
+                  {userStats ? Math.round(userStats.average_accuracy) : 0}%
+                </div>
+                <div className="text-sm text-ivory-light/80">Accuracy</div>
               </div>
             </div>
           </CardContent>

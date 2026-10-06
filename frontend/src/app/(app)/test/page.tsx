@@ -1,44 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TypingEngine, { TypingResult } from "@/components/domain/TypingEngine";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Check } from "lucide-react";
-
-const SAMPLE_TEXTS = {
-  plain: [
-    "The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet and is commonly used for typing practice.",
-    "To improve your typing speed, practice regularly and focus on accuracy first. Speed will naturally follow as your muscle memory develops.",
-    "Programming requires precise typing. Small errors in code can cause bugs that are difficult to track down and fix.",
-  ],
-  quotes: [
-    "The only way to do great work is to love what you do. - Steve Jobs",
-    "Innovation distinguishes between a leader and a follower. - Steve Jobs",
-    "Stay hungry, stay foolish. - Steve Jobs",
-    "The greatest glory in living lies not in never falling, but in rising every time we fall. - Nelson Mandela",
-    "In the middle of difficulty lies opportunity. - Albert Einstein",
-    "Success is not final, failure is not fatal: it is the courage to continue that counts. - Winston Churchill",
-  ],
-  numbers: [
-    "The quick brown fox jumps over 5 lazy dogs. 100 percent of 10 people agree that practice makes perfect.",
-    "In 2024, 50 million people learned to type online. 1 in 3 users improved their speed by 20 WPM.",
-    "The temperature is 72 degrees. The price is $19.99. Call 555-1234 for more information.",
-  ],
-  code: [
-    "function calculateWPM(chars, time) { return Math.round((chars / 5) / (time / 60)); }",
-    "const user = { name: 'John', age: 25, email: 'john@example.com' };",
-    "if (isValid) { return true; } else { return false; }",
-    "import React from 'react'; export default function App() { return <div>Hello</div>; }",
-  ],
-  punctuation: [
-    "Hello, world! How are you today? I'm doing great, thanks for asking.",
-    "The quick brown fox jumps over the lazy dog; however, the dog didn't seem to mind.",
-    "Don't forget to practice every day! It's the key to success—believe me.",
-  ],
-  custom: [] as string[],
-};
+import { generateRandomWords, generateRandomQuote, generateRandomCode } from "@/lib/wordGenerator";
+import { apiPost, apiGet } from '@/lib/api-client';
 
 interface TestOptions {
   numbers: boolean;
@@ -55,7 +24,7 @@ export default function TestPage() {
   const [wordCount, setWordCount] = useState(50);
   const [contentType, setContentType] = useState<"plain" | "quotes" | "numbers" | "code" | "punctuation" | "custom">("plain");
   const [result, setResult] = useState<TypingResult | null>(null);
-  const [selectedText, setSelectedText] = useState(SAMPLE_TEXTS.plain[0]);
+  const [selectedText, setSelectedText] = useState("");
   const [customText, setCustomText] = useState("");
   const [options, setOptions] = useState<TestOptions>({
     numbers: false,
@@ -65,6 +34,30 @@ export default function TestPage() {
     instantDeath: false,
     soundEnabled: true,
   });
+  const [userSettings, setUserSettings] = useState<any>(null);
+
+  useEffect(() => {
+    fetchUserSettings();
+  }, []);
+
+  const fetchUserSettings = async () => {
+    try {
+      const res = await apiGet('/users/me/settings');
+      if (res.ok) {
+        const text = await res.text();
+        if (text) {
+          const settings = JSON.parse(text);
+          setUserSettings(settings);
+          setOptions(prev => ({
+            ...prev,
+            soundEnabled: settings?.sound_enabled ?? true,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
 
   const handleStart = () => {
     setResult(null);
@@ -74,22 +67,66 @@ export default function TestPage() {
         return;
       }
       setSelectedText(customText);
-    } else {
-      const texts = SAMPLE_TEXTS[contentType];
-      setSelectedText(texts[Math.floor(Math.random() * texts.length)]);
+    } else if (contentType === "plain") {
+      const count = mode === "words" ? wordCount : Math.floor(duration / 2);
+      setSelectedText(generateRandomWords({
+        wordCount: count,
+        includeNumbers: options.numbers,
+        includeSymbols: options.symbols,
+        includePunctuation: options.punctuation,
+      }));
+    } else if (contentType === "quotes") {
+      setSelectedText(generateRandomQuote());
+    } else if (contentType === "code") {
+      setSelectedText(generateRandomCode());
+    } else if (contentType === "numbers") {
+      const count = mode === "words" ? wordCount : Math.floor(duration / 2);
+      setSelectedText(generateRandomWords({
+        wordCount: count,
+        includeNumbers: true,
+      }));
+    } else if (contentType === "punctuation") {
+      const count = mode === "words" ? wordCount : Math.floor(duration / 2);
+      setSelectedText(generateRandomWords({
+        wordCount: count,
+        includePunctuation: true,
+      }));
     }
   };
 
-  const handleComplete = (testResult: TypingResult) => {
+  const handleComplete = async (testResult: TypingResult) => {
     setResult(testResult);
+
+    // Save result to backend
+    try {
+      await apiPost('/typing/sessions', {
+        mode: mode,
+        duration: mode === "time" ? duration : testResult.timeElapsed,
+        wordCount: mode === "words" ? wordCount : Math.floor(testResult.totalChars / 5),
+        contentType: contentType,
+        wpm: testResult.wpm,
+        accuracy: testResult.accuracy,
+        correctChars: testResult.correctChars,
+        incorrectChars: testResult.incorrectChars,
+        timeElapsed: testResult.timeElapsed,
+        errors: testResult.errors.map(err => ({
+          index: err.index,
+          expected: err.expected,
+          actual: err.actual,
+        })),
+        keyMetrics: testResult.keyMetrics,
+      });
+    } catch (error) {
+      console.error('Failed to save typing session:', error);
+    }
   };
 
   if (result) {
     return (
       <div className="min-h-screen bg-ivory-light p-8">
         <div className="max-w-4xl mx-auto">
-          <Link href="/">
-            <Button variant="ghost" className="mb-6">← Back to Home</Button>
+          <Link href="/dashboard">
+            <Button variant="ghost" className="mb-6">← Back to Dashboard</Button>
           </Link>
 
           <Card>
@@ -140,8 +177,8 @@ export default function TestPage() {
 
               <div className="flex gap-4">
                 <Button onClick={handleStart} className="flex-1">Try Again</Button>
-                <Link href="/" className="flex-1">
-                  <Button variant="outline" className="w-full">Back to Home</Button>
+                <Link href="/dashboard" className="flex-1">
+                  <Button variant="outline" className="w-full">Back to Dashboard</Button>
                 </Link>
               </div>
             </CardContent>
@@ -154,8 +191,8 @@ export default function TestPage() {
   return (
     <div className="min-h-screen bg-ivory-light p-8">
       <div className="max-w-4xl mx-auto">
-        <Link href="/">
-          <Button variant="ghost" className="mb-6">← Back to Home</Button>
+        <Link href="/dashboard">
+          <Button variant="ghost" className="mb-6">← Back to Dashboard</Button>
         </Link>
 
         <Card className="mb-8">
@@ -311,7 +348,7 @@ export default function TestPage() {
             wordLimit={mode === "words" ? wordCount : undefined}
             blindMode={options.blindMode}
             instantDeath={options.instantDeath}
-            soundEnabled={options.soundEnabled}
+            soundEnabled={userSettings?.sound_enabled ?? options.soundEnabled}
           />
         )}
       </div>

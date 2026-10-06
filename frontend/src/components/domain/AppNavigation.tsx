@@ -51,7 +51,7 @@ export default function AppNavigation() {
 
           {/* Desktop User Actions */}
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/profile">
+            <Link href="/profile/me">
               <Button variant="ghost" size="icon">
                 <User className="h-5 w-5" />
               </Button>
@@ -105,7 +105,7 @@ export default function AppNavigation() {
                 Programming
               </Link>
               <div className="border-t border-border pt-2 mt-2 flex gap-2">
-                <Link href="/profile" className="flex-1 flex items-center justify-center gap-2 text-text-secondary hover:text-forest-primary transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>
+                <Link href="/profile/me" className="flex-1 flex items-center justify-center gap-2 text-text-secondary hover:text-forest-primary transition-colors py-2" onClick={() => setMobileMenuOpen(false)}>
                   <User className="h-4 w-4" />
                   Profile
                 </Link>

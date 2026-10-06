@@ -6,6 +6,7 @@ import AppNavigation from "@/components/domain/AppNavigation";
 import { Button } from "@/components/ui/button";
 import { Users, Timer, Target, Flame, Play, Crown } from "lucide-react";
 import { io, Socket } from 'socket.io-client';
+import { apiGet, apiPost, getApiOrigin, getAuthToken } from '@/lib/api-client';
 
 const T = {
   bg: '#FAF8F5',
@@ -38,6 +39,7 @@ export default function CompetitionPage() {
   const [correctChars, setCorrectChars] = useState(0);
   const [totalChars, setTotalChars] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const WORD_LIST = [
@@ -54,59 +56,68 @@ export default function CompetitionPage() {
   ];
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    let newSocket: Socket | null = null;
+    let cancelled = false;
 
-    const newSocket = io(apiUrl.replace('/api', ''), {
-      auth: { token },
-      transports: ['websocket'],
-    });
+    const connect = async () => {
+      const token = await getAuthToken();
+      if (cancelled) return;
 
-    newSocket.on('connect', () => {
-      console.log('Connected to competition server');
-    });
+      const socketUrl = getApiOrigin();
+      newSocket = io(socketUrl, {
+        auth: { token },
+        transports: ['websocket'],
+      });
 
-    newSocket.on('participant-joined', (data) => {
-      setParticipants(prev => [...prev, data]);
-    });
+      newSocket.on('connect', () => {
+        console.log('Connected to competition server');
+      });
 
-    newSocket.on('participant-left', (data) => {
-      setParticipants(prev => prev.filter(p => p.userId !== data.userId));
-    });
+      newSocket.on('participant-joined', (data: any) => {
+        setParticipants(prev => [...prev, data]);
+      });
 
-    newSocket.on('competition-started', (data) => {
-      setIsStarted(true);
-      setTimeLeft(data.duration);
-      generateWords();
-      inputRef.current?.focus();
-    });
+      newSocket?.on('participant-left', (data: any) => {
+        setParticipants(prev => prev.filter(p => p.userId !== data.userId));
+      });
 
-    newSocket.on('progress-update', (data) => {
-      setParticipants(prev => prev.map(p =>
-        p.userId === data.userId ? { ...p, progress: data.progress, wpm: data.wpm, accuracy: data.accuracy } : p
-      ));
-    });
+      newSocket?.on('competition-started', (data: any) => {
+        setIsStarted(true);
+        setTimeLeft(data.duration);
+        generateWords();
+        inputRef.current?.focus();
+      });
 
-    newSocket.on('participant-finished', (data) => {
-      setParticipants(prev => prev.map(p =>
-        p.userId === data.userId ? { ...p, finished: true, wpm: data.wpm, accuracy: data.accuracy } : p
-      ));
-    });
+      newSocket?.on('progress-update', (data: any) => {
+        setParticipants(prev => prev.map(p =>
+          p.userId === data.userId ? { ...p, progress: data.progress, wpm: data.wpm, accuracy: data.accuracy } : p
+        ));
+      });
 
-    newSocket.on('competition-ended', (data) => {
-      setIsFinished(true);
-      setIsStarted(false);
-      setResults(data.results);
-    });
+      newSocket?.on('participant-finished', (data: any) => {
+        setParticipants(prev => prev.map(p =>
+          p.userId === data.userId ? { ...p, finished: true, wpm: data.wpm, accuracy: data.accuracy } : p
+        ));
+      });
 
-    newSocket.on('error', (data) => {
-      console.error('Competition error:', data.message);
-    });
+      newSocket?.on('competition-ended', (data: any) => {
+        setIsFinished(true);
+        setIsStarted(false);
+        setResults(data.results);
+      });
 
-    setSocket(newSocket);
+      newSocket?.on('error', (data: any) => {
+        console.error('Competition error:', data.message);
+      });
+
+      setSocket(newSocket);
+    };
+
+    connect();
 
     return () => {
-      newSocket.disconnect();
+      cancelled = true;
+      newSocket?.disconnect();
     };
   }, []);
 
@@ -118,35 +129,32 @@ export default function CompetitionPage() {
     setCurrentInput('');
   };
 
-  const joinCompetition = () => {
-    const token = localStorage.getItem('access_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const joinCompetition = async () => {
+    try {
+      const res = await apiGet('/auth/me');
 
-    fetch(`${apiUrl}/users/me`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-    .then(res => {
       if (res.status === 401) {
-        window.location.href = '/login';
-        return null;
+        router.push('/login');
+        return;
       }
-      return res.json();
-    })
-    .then(profile => {
-      if (profile) {
-        const newRoomId = roomId || `room-${Date.now()}`;
-        socket?.emit('join-competition', {
-          roomId: newRoomId,
-          userId: profile.user_id,
-          username: profile.username,
-        });
-        setRoomId(newRoomId);
-        setIsJoined(true);
-      }
-    });
+
+      if (!res.ok) return;
+
+      const profile = await res.json();
+      if (!profile) return;
+
+      const newRoomId = roomId || `room-${Date.now()}`;
+      setUserId(profile.user_id);
+      socket?.emit('join-competition', {
+        roomId: newRoomId,
+        userId: profile.user_id,
+        username: profile.username,
+      });
+      setRoomId(newRoomId);
+      setIsJoined(true);
+    } catch (error) {
+      console.error('Failed to join competition:', error);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -186,20 +194,39 @@ export default function CompetitionPage() {
 
     socket?.emit('update-progress', {
       roomId,
-      userId: localStorage.getItem('user_id'),
+      userId,
       progress,
       wpm: calculatedWpm,
       accuracy: calculatedAccuracy,
     });
   };
 
-  const finishCompetition = () => {
+  const finishCompetition = async () => {
     socket?.emit('finish-competition', {
       roomId,
-      userId: localStorage.getItem('user_id'),
+      userId,
       wpm,
       accuracy,
     });
+
+    // Save result to backend
+    try {
+      await apiPost('/typing/sessions', {
+        mode: 'time',
+        duration: 60 - timeLeft,
+        wordCount: words.length,
+        contentType: 'competition',
+        wpm: wpm,
+        accuracy: accuracy,
+        correctChars: correctChars,
+        incorrectChars: totalChars - correctChars,
+        timeElapsed: startTime ? (Date.now() - startTime) / 1000 : 0,
+        errors: [],
+        keyMetrics: [],
+      });
+    } catch (error) {
+      console.error('Failed to save competition session:', error);
+    }
   };
 
   const leaveCompetition = () => {

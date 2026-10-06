@@ -27,4 +27,9 @@ export class UsersController {
   async getSettings(@CurrentUser() user: any) {
     return this.usersService.getSettings(user.id);
   }
+
+  @Get('me/stats')
+  async getStats(@CurrentUser() user: any) {
+    return this.usersService.getStats(user.id);
+  }
 }

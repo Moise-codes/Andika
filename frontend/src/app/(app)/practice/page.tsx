@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import AppNavigation from "@/components/domain/AppNavigation";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Timer, Target, Flame } from "lucide-react";
+import { apiPost } from '@/lib/api-client';
 
 const T = {
   bg: '#FAF8F5',
@@ -202,10 +203,34 @@ export default function PracticePage() {
     setConsistency(Math.round(calculatedConsistency));
   };
 
-  const finishTest = () => {
+  const finishTest = async () => {
     setIsFinished(true);
     setIsStarted(false);
     calculateStats();
+
+    // Save result to backend
+    try {
+      await apiPost('/typing/sessions', {
+        mode: mode,
+        duration: mode === "time" ? duration : (startTime ? (Date.now() - startTime) / 1000 : 0),
+        wordCount: mode === "words" ? wordCount : typedWords.length,
+        contentType: 'plain',
+        wpm: wpm,
+        accuracy: accuracy,
+        correctChars: correctChars,
+        incorrectChars: totalChars - correctChars,
+        timeElapsed: mode === "time" ? duration - timeLeft : (startTime ? (Date.now() - startTime) / 1000 : 0),
+        errors: Object.entries(keyErrors).map(([key, count]) => ({ key, count })),
+        keyMetrics: Object.entries(keyTimings).map(([key, timings]) => ({
+          key,
+          avgTime: timings.reduce((a, b) => a + b, 0) / timings.length,
+          correct: 0,
+          incorrect: 0,
+        })),
+      });
+    } catch (error) {
+      console.error('Failed to save typing session:', error);
+    }
   };
 
   const restartTest = () => {
